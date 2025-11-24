@@ -8,85 +8,59 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 265 4% 12.9%;
+    /* Midda Design System - Warm, natural colors */
+    --background: 45 30% 96%;
+    --foreground: 150 30% 20%;
 
     --card: 0 0% 100%;
-    --card-foreground: 265 4% 12.9%;
+    --card-foreground: 150 30% 20%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 265 4% 12.9%;
+    --popover-foreground: 150 30% 20%;
 
-    --primary: 266 4% 20.8%;
-    --primary-foreground: 248 0.3% 98.4%;
+    --primary: 150 40% 30%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 248 0.7% 96.8%;
-    --secondary-foreground: 266 4% 20.8%;
+    --secondary: 35 40% 85%;
+    --secondary-foreground: 150 30% 20%;
 
-    --muted: 248 0.7% 96.8%;
-    --muted-foreground: 257 4.6% 55.4%;
+    --muted: 30 35% 70%;
+    --muted-foreground: 30 35% 45%;
 
-    --accent: 248 0.7% 96.8%;
-    --accent-foreground: 266 4% 20.8%;
+    --accent: 30 35% 65%;
+    --accent-foreground: 150 30% 20%;
 
-    --destructive: 27 24.5% 57.7%;
+    --destructive: 0 65% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 256 1.3% 92.9%;
-    --input: 256 1.3% 92.9%;
-    --ring: 257 4% 70.4%;
+    --border: 30 25% 88%;
+    --input: 30 25% 88%;
+    --ring: 150 40% 30%;
 
-    --radius: 0.375rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* Midda Typography */
+    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-    --sidebar-foreground: 265 4% 12.9%;
-
-    --sidebar-primary: 266 4% 20.8%;
-
-    --sidebar-primary-foreground: 248 0.3% 98.4%;
-
-    --sidebar-accent: 248 0.7% 96.8%;
-
-    --sidebar-accent-foreground: 266 4% 20.8%;
-
-    --sidebar-border: 256 1.3% 92.9%;
-
-    --sidebar-ring: 257 4% 70.4%;
-
-    --chart-1: 41 22.2% 64.6%;
-
-    --chart-2: 185 11.8% 60%;
-
-    --chart-3: 227 7% 39.8%;
-
-    --chart-4: 84 18.9% 82.8%;
-
-    --chart-5: 70 18.8% 76.9%;
-
-    --sidebar: 248 0.3% 98.4%;
-
-    --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-
-    --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    --font-serif: 'Lora', ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
 
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    /* Midda Shadows - Soft and natural */
+    --shadow-soft: 0 2px 8px 0 hsl(0 0% 0% / 0.08);
 
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-medium: 0 4px 16px 0 hsl(0 0% 0% / 0.1);
 
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow-strong: 0 8px 24px 0 hsl(0 0% 0% / 0.12);
 
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow-hover: 0 12px 32px 0 hsl(0 0% 0% / 0.14);
 
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+    /* Gradients */
+    --gradient-warm: linear-gradient(135deg, hsl(150 40% 30%), hsl(35 40% 85%));
+    
+    --gradient-fresh: linear-gradient(180deg, hsl(150 40% 30%), hsl(150 50% 40%));
+    
+    --gradient-hero: linear-gradient(135deg, hsl(150 40% 30%) 0%, hsl(150 45% 35%) 50%, hsl(35 40% 75%) 100%);
 
     --tracking-normal: 0em;
 
@@ -94,47 +68,34 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 0 0% 15%;
-    --foreground: 248 0.3% 98.4%;
+    /* Midda Dark Mode - Warm dark with green tint */
+    --background: 150 20% 10%;
+    --foreground: 45 30% 95%;
 
-    --card: 266 4% 20.8%;
-    --card-foreground: 248 0.3% 98.4%;
+    --card: 150 15% 15%;
+    --card-foreground: 45 30% 95%;
 
-    --popover: 266 4% 20.8%;
-    --popover-foreground: 248 0.3% 98.4%;
+    --popover: 150 15% 15%;
+    --popover-foreground: 45 30% 95%;
 
-    --primary: 256 1.3% 92.9%;
-    --primary-foreground: 266 4% 20.8%;
+    --primary: 150 45% 45%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 260 4.1% 27.9%;
-    --secondary-foreground: 248 0.3% 98.4%;
+    --secondary: 150 15% 20%;
+    --secondary-foreground: 45 30% 95%;
 
-    --muted: 260 4.1% 27.9%;
-    --muted-foreground: 257 4% 70.4%;
+    --muted: 150 10% 25%;
+    --muted-foreground: 30 20% 65%;
 
-    --accent: 260 4.1% 27.9%;
-    --accent-foreground: 248 0.3% 98.4%;
+    --accent: 150 20% 30%;
+    --accent-foreground: 45 30% 95%;
 
-    --destructive: 22 19.1% 70.4%;
-    --destructive-foreground: 248 0.3% 98.4%;
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 100% / 10%;
-    --input: 0 0% 100% / 15%;
-    --ring: 264 2.7% 55.1%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 248 0.3% 98.4%;
-    --sidebar-primary: 264 24.3% 48.8%;
-    --sidebar-primary-foreground: 248 0.3% 98.4%;
-    --sidebar-accent: 260 4.1% 27.9%;
-    --sidebar-accent-foreground: 248 0.3% 98.4%;
-    --sidebar-border: 0 0% 100% / 10%;
-    --sidebar-ring: 264 2.7% 55.1%;
-    --chart-1: 264 24.3% 48.8%;
-    --chart-2: 162 17% 69.6%;
-    --chart-3: 70 18.8% 76.9%;
-    --chart-4: 304 26.5% 62.7%;
-    --chart-5: 16 24.6% 64.5%;
-    --sidebar: 266 4% 20.8%;
+    --border: 150 15% 25%;
+    --input: 150 15% 25%;
+    --ring: 150 45% 45%;
   }
 }
 
