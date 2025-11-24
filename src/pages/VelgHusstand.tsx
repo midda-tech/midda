@@ -151,11 +151,11 @@ const VelgHusstand = () => {
           <CardContent>
             <Tabs defaultValue="create" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="create" className="gap-2">
+                <TabsTrigger value="create" className="gap-2 data-[state=inactive]:text-foreground">
                   <Home className="h-4 w-4" />
                   Opprett ny
                 </TabsTrigger>
-                <TabsTrigger value="join" className="gap-2">
+                <TabsTrigger value="join" className="gap-2 data-[state=inactive]:text-foreground">
                   <Users className="h-4 w-4" />
                   Bli med
                 </TabsTrigger>
@@ -167,7 +167,7 @@ const VelgHusstand = () => {
                     <Label htmlFor="householdName">Hustandsnavn</Label>
                     <Input
                       id="householdName"
-                      placeholder="Familie Hansen"
+                      placeholder="Familien Hansen"
                       value={householdName}
                       onChange={(e) => setHouseholdName(e.target.value)}
                       disabled={loading}
