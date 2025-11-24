@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LogOut, Home, Users } from "lucide-react";
 import { toast } from "sonner";
 
-const VelgHusstand = () => {
+const SelectHousehold = () => {
   const navigate = useNavigate();
   const [householdName, setHouseholdName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
@@ -209,4 +209,4 @@ const VelgHusstand = () => {
   );
 };
 
-export default VelgHusstand;
+export default SelectHousehold;
