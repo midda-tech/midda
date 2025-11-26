@@ -16,13 +16,24 @@ const SelectHousehold = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkAuthAndHousehold = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         navigate("/auth");
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("current_household_id")
+        .eq("id", session.user.id)
+        .single();
+
+      if (profile?.current_household_id) {
+        navigate("/hjem");
       }
     };
-    checkAuth();
+    checkAuthAndHousehold();
   }, [navigate]);
 
   const handleSignOut = async () => {
@@ -63,7 +74,7 @@ const SelectHousehold = () => {
       if (profileError) throw profileError;
 
       toast.success("Husstand opprettet!");
-      navigate("/");
+      navigate("/hjem");
     } catch (error: any) {
       toast.error(error.message || "Kunne ikke opprette husstand");
     } finally {
@@ -115,7 +126,7 @@ const SelectHousehold = () => {
       if (profileError) throw profileError;
 
       toast.success(`Ble med i ${household.household_name}!`);
-      navigate("/");
+      navigate("/hjem");
     } catch (error: any) {
       toast.error(error.message || "Kunne ikke bli med i husstand");
     } finally {
