@@ -1,22 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Home, Copy, Check, Edit2, X, Plus, Users } from "lucide-react";
+import { Home, Copy, Check, Edit2, X, Users } from "lucide-react";
 import { toast } from "sonner";
-
-interface Household {
-  id: string;
-  household_name: string;
-  invite_code: string;
-  created_by: string;
-  default_servings: number | null;
-}
+import { Household } from "@/types/household";
+import { useHouseholdMembers } from "@/hooks/useHouseholdMembers";
+import { JoinHouseholdDialog } from "./JoinHouseholdDialog";
 
 interface HouseholdSectionProps {
   currentHousehold: Household | null;
@@ -36,65 +29,7 @@ export const HouseholdSection = ({
   const [codeCopied, setCodeCopied] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState("");
-  const [addHouseholdDialogOpen, setAddHouseholdDialogOpen] = useState(false);
-  const [inviteCode, setInviteCode] = useState("");
-  const [newHouseholdName, setNewHouseholdName] = useState("");
-  const [processing, setProcessing] = useState(false);
-  const [members, setMembers] = useState<Array<{ user_id: string; first_name: string; last_name: string }>>([]);
-  const [loadingMembers, setLoadingMembers] = useState(true);
-
-  useEffect(() => {
-    if (!currentHousehold?.id) {
-      setLoadingMembers(false);
-      return;
-    }
-
-    const fetchMembers = async () => {
-      try {
-        // First get household members
-        const { data: memberData, error: membersError } = await supabase
-          .from("household_members")
-          .select("user_id, joined_at")
-          .eq("household_id", currentHousehold.id)
-          .order("joined_at", { ascending: true });
-
-        if (membersError) throw membersError;
-        
-        if (!memberData || memberData.length === 0) {
-          setMembers([]);
-          setLoadingMembers(false);
-          return;
-        }
-
-        // Then get profiles for those user_ids
-        const userIds = memberData.map(m => m.user_id);
-        const { data: profileData, error: profilesError } = await supabase
-          .from("profiles")
-          .select("id, first_name, last_name")
-          .in("id", userIds);
-
-        if (profilesError) throw profilesError;
-
-        // Combine the data
-        const formattedMembers = memberData.map(member => {
-          const profile = profileData?.find(p => p.id === member.user_id);
-          return {
-            user_id: member.user_id,
-            first_name: profile?.first_name || "",
-            last_name: profile?.last_name || "",
-          };
-        });
-
-        setMembers(formattedMembers);
-      } catch (error: any) {
-        console.error("Error fetching household members:", error);
-      } finally {
-        setLoadingMembers(false);
-      }
-    };
-
-    fetchMembers();
-  }, [currentHousehold?.id]);
+  const { members, loading: loadingMembers } = useHouseholdMembers(currentHousehold?.id);
 
   if (!currentHousehold) return null;
 
@@ -155,83 +90,6 @@ export const HouseholdSection = ({
       toast.success("Byttet husstand");
     } catch (error: any) {
       toast.error(error.message || "Kunne ikke bytte husstand");
-    }
-  };
-
-  const handleJoinHousehold = async () => {
-    if (!inviteCode.trim()) {
-      toast.error("Vennligst skriv inn invitasjonskode");
-      return;
-    }
-
-    setProcessing(true);
-    try {
-      const { data, error } = await supabase.rpc("join_household_by_invite", {
-        p_invite_code: inviteCode.trim().toUpperCase(),
-      });
-
-      if (error) throw error;
-
-      // Switch to the newly joined household
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Ikke autentisert");
-
-      const result = data as { household_id: string; household_name: string };
-      
-      await supabase
-        .from("profiles")
-        .update({ current_household_id: result.household_id })
-        .eq("id", user.id);
-
-      toast.success(`Ble med i ${result.household_name}`);
-      setAddHouseholdDialogOpen(false);
-      setInviteCode("");
-      onHouseholdJoined();
-    } catch (error: any) {
-      toast.error(error.message || "Kunne ikke bli med i husstand");
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  const handleCreateHousehold = async () => {
-    if (!newHouseholdName.trim()) {
-      toast.error("Vennligst skriv inn et navn på husstanden");
-      return;
-    }
-
-    setProcessing(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Ikke autentisert");
-
-      // Create the household
-      const { data: householdData, error: householdError } = await supabase
-        .from("households")
-        .insert({
-          household_name: newHouseholdName.trim(),
-          created_by: user.id,
-          default_servings: 4,
-        })
-        .select()
-        .single();
-
-      if (householdError) throw householdError;
-
-      // Switch to the new household
-      await supabase
-        .from("profiles")
-        .update({ current_household_id: householdData.id })
-        .eq("id", user.id);
-
-      toast.success(`Opprettet ${householdData.household_name}`);
-      setAddHouseholdDialogOpen(false);
-      setNewHouseholdName("");
-      onHouseholdJoined();
-    } catch (error: any) {
-      toast.error(error.message || "Kunne ikke opprette husstand");
-    } finally {
-      setProcessing(false);
     }
   };
 
@@ -342,93 +200,8 @@ export const HouseholdSection = ({
           )}
         </div>
 
-        {/* Add Household (Join or Create) */}
-        <div>
-          <Dialog open={addHouseholdDialogOpen} onOpenChange={setAddHouseholdDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="w-full gap-2">
-                <Plus className="h-4 w-4" />
-                Legg til husstand
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Legg til husstand</DialogTitle>
-                <DialogDescription>
-                  Bli med i en eksisterende husstand eller opprett en ny
-                </DialogDescription>
-              </DialogHeader>
-              
-              <Tabs defaultValue="join" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="join">Bli med</TabsTrigger>
-                  <TabsTrigger value="create">Opprett ny</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="join" className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="invite-code">Invitasjonskode</Label>
-                    <Input
-                      id="invite-code"
-                      value={inviteCode}
-                      onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                      placeholder="ABC123"
-                      maxLength={6}
-                      className="font-mono tracking-wider"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Skriv inn invitasjonskoden du har fått
-                    </p>
-                  </div>
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setAddHouseholdDialogOpen(false);
-                        setInviteCode("");
-                      }}
-                    >
-                      Avbryt
-                    </Button>
-                    <Button onClick={handleJoinHousehold} disabled={processing}>
-                      {processing ? "Blir med..." : "Bli med"}
-                    </Button>
-                  </DialogFooter>
-                </TabsContent>
-                
-                <TabsContent value="create" className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="household-name">Husstandsnavn</Label>
-                    <Input
-                      id="household-name"
-                      value={newHouseholdName}
-                      onChange={(e) => setNewHouseholdName(e.target.value)}
-                      placeholder="Familie Hansen"
-                      maxLength={100}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Velg et navn på den nye husstanden
-                    </p>
-                  </div>
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setAddHouseholdDialogOpen(false);
-                        setNewHouseholdName("");
-                      }}
-                    >
-                      Avbryt
-                    </Button>
-                    <Button onClick={handleCreateHousehold} disabled={processing}>
-                      {processing ? "Oppretter..." : "Opprett"}
-                    </Button>
-                  </DialogFooter>
-                </TabsContent>
-              </Tabs>
-            </DialogContent>
-          </Dialog>
-        </div>
+        {/* Add Household */}
+        <JoinHouseholdDialog onHouseholdJoined={onHouseholdJoined} />
       </CardContent>
     </Card>
   );
