@@ -350,7 +350,7 @@ const NewRecipe = () => {
                       </span>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-full p-0" align="start">
+                  <PopoverContent className="w-full p-0" align="start" side="top">
                     <Command>
                       <CommandInput 
                         placeholder="Søk eller skriv ny tag..." 
