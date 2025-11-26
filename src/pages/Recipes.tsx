@@ -113,7 +113,7 @@ const Recipes = () => {
                 {filteredRecipes.length} oppskrifter tilgjengelig
               </p>
             </div>
-            <Button size="lg" className="gap-2">
+            <Button size="lg" className="gap-2" onClick={() => navigate("/oppskrifter/ny")}>
               <Plus className="h-4 w-4" />
               Ny oppskrift
             </Button>
