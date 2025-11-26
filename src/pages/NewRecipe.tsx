@@ -330,7 +330,7 @@ const NewRecipe = () => {
                           }
                         }}
                         rows={1}
-                        className="text-sm py-2 pr-8 min-h-[2.5rem]"
+                        className="resize-none text-sm py-2 pr-8 min-h-[2.5rem]"
                       />
                       {instructions.length > 1 && (
                         <button
