@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ProfileSection } from "@/components/settings/ProfileSection";
 import { HouseholdSection } from "@/components/settings/HouseholdSection";
+import { HouseholdMembersSection } from "@/components/settings/HouseholdMembersSection";
 import { AppSettingsSection } from "@/components/settings/AppSettingsSection";
 import { AccountSection } from "@/components/settings/AccountSection";
 
@@ -143,6 +144,8 @@ const Settings = () => {
           onHouseholdUpdate={handleHouseholdUpdate}
           onHouseholdJoined={handleHouseholdJoined}
         />
+
+        <HouseholdMembersSection householdId={currentHousehold?.id || null} />
 
         {currentHousehold && (
           <AppSettingsSection
