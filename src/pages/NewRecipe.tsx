@@ -263,7 +263,7 @@ const NewRecipe = () => {
                 <Label>Ingredienser *</Label>
                 <div className="space-y-2">
                   {ingredients.map((ingredient, index) => (
-                    <div key={index} className="space-y-1.5">
+                    <div key={index} className="relative group">
                       <Textarea
                         placeholder="F.eks. 2 dl melk"
                         value={ingredient}
@@ -280,19 +280,17 @@ const NewRecipe = () => {
                           }
                         }}
                         rows={1}
-                        className="resize-none py-2 text-sm min-h-[2.5rem]"
+                        className="resize-none py-2 text-sm min-h-[2.5rem] pr-8"
                       />
                       {ingredients.length > 1 && (
-                        <Button
+                        <button
                           type="button"
-                          variant="ghost"
-                          size="sm"
                           onClick={() => removeIngredient(index)}
-                          className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                          className="absolute top-2 right-2 p-1 rounded-md opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-muted"
+                          aria-label="Fjern ingrediens"
                         >
-                          <X className="h-3 w-3 mr-1" />
-                          Fjern
-                        </Button>
+                          <X className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                        </button>
                       )}
                     </div>
                   ))}
@@ -312,7 +310,7 @@ const NewRecipe = () => {
                 <Label>Fremgangsmåte *</Label>
                 <div className="space-y-2">
                   {instructions.map((instruction, index) => (
-                    <div key={index} className="space-y-1.5">
+                    <div key={index} className="relative group">
                       <Textarea
                         placeholder={`Steg ${index + 1}`}
                         value={instruction}
@@ -332,19 +330,17 @@ const NewRecipe = () => {
                           }
                         }}
                         rows={2}
-                        className="text-sm py-2"
+                        className="text-sm py-2 pr-8"
                       />
                       {instructions.length > 1 && (
-                        <Button
+                        <button
                           type="button"
-                          variant="ghost"
-                          size="sm"
                           onClick={() => removeInstruction(index)}
-                          className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                          className="absolute top-2 right-2 p-1 rounded-md opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-muted"
+                          aria-label="Fjern steg"
                         >
-                          <X className="h-3 w-3 mr-1" />
-                          Fjern
-                        </Button>
+                          <X className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                        </button>
                       )}
                     </div>
                   ))}
