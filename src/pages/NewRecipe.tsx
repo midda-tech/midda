@@ -217,24 +217,40 @@ const NewRecipe = () => {
                 />
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <Label>Velg ikon</Label>
-                <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((iconNum) => (
-                    <button
-                      key={iconNum}
-                      type="button"
-                      onClick={() => setSelectedIcon(iconNum)}
-                      className={`aspect-square rounded-xl border-2 p-4 transition-all hover:scale-105 ${
-                        selectedIcon === iconNum
-                          ? "border-primary bg-primary/5"
-                          : "border-border bg-card hover:border-primary/50"
-                      }`}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-start gap-3 h-12"
                     >
-                      <img src={getRecipeIcon(iconNum)} alt="" className="w-full h-full object-contain" />
-                    </button>
-                  ))}
-                </div>
+                      <img src={getRecipeIcon(selectedIcon)} alt="" className="h-6 w-6" />
+                      <span className="text-muted-foreground">Velg ikon for oppskriften</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-3" align="start">
+                    <div className="grid grid-cols-5 gap-2">
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((iconNum) => (
+                        <button
+                          key={iconNum}
+                          type="button"
+                          onClick={() => {
+                            setSelectedIcon(iconNum);
+                          }}
+                          className={`aspect-square rounded-lg border-2 p-2 transition-all hover:scale-105 ${
+                            selectedIcon === iconNum
+                              ? "border-primary bg-primary/5"
+                              : "border-border bg-card hover:border-primary/50"
+                          }`}
+                        >
+                          <img src={getRecipeIcon(iconNum)} alt="" className="w-full h-full object-contain" />
+                        </button>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="space-y-2.5">
