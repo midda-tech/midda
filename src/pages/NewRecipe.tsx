@@ -5,14 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { X, Check } from "lucide-react";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/AppHeader";
-import { getRecipeIcon } from "@/lib/recipeIcons";
 import { DynamicTextFields } from "@/components/recipe/DynamicTextFields";
+import { IconSelector } from "@/components/recipe/IconSelector";
+import { TagSelector } from "@/components/recipe/TagSelector";
+import { useRecipeTags } from "@/hooks/useRecipeTags";
 import { z } from "zod";
 
 const recipeSchema = z.object({
@@ -37,8 +35,8 @@ const NewRecipe = () => {
   const [ingredients, setIngredients] = useState<string[]>([""]);
   const [instructions, setInstructions] = useState<string[]>([""]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [availableTags, setAvailableTags] = useState<string[]>([]);
-  const [tagSearchOpen, setTagSearchOpen] = useState(false);
+
+  const { tags: availableTags, addTag } = useRecipeTags(householdId);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -69,45 +67,27 @@ const NewRecipe = () => {
     checkAuth();
   }, [navigate]);
 
-  // Fetch all unique tags from both system and household recipes
-  useEffect(() => {
-    const fetchTags = async () => {
-      if (!householdId) return;
-
-      const [systemResult, householdResult] = await Promise.all([
-        supabase.from("system_recipes").select("tags"),
-        supabase.from("household_recipes").select("tags").eq("household_id", householdId)
-      ]);
-
-      const allTags = new Set<string>();
-      
-      [...(systemResult.data || []), ...(householdResult.data || [])].forEach((recipe) => {
-        if (Array.isArray(recipe.tags)) {
-          recipe.tags.forEach((tag: string) => {
-            if (tag && tag.trim()) {
-              allTags.add(tag.trim());
-            }
-          });
-        }
-      });
-
-      setAvailableTags(Array.from(allTags).sort());
-    };
-
-    fetchTags();
-  }, [householdId]);
-
-  const updateField = (fields: string[], setFields: (fields: string[]) => void) => ({
-    add: () => setFields([...fields, ""]),
-    remove: (index: number) => fields.length > 1 && setFields(fields.filter((_, i) => i !== index)),
+  const updateIngredients = {
+    add: () => setIngredients([...ingredients, ""]),
+    remove: (index: number) => ingredients.length > 1 && setIngredients(ingredients.filter((_, i) => i !== index)),
     update: (index: number, value: string) => {
-      const updated = [...fields];
+      const updated = [...ingredients];
       updated[index] = value;
-      setFields(updated);
+      setIngredients(updated);
     },
-  });
+  };
 
-  const toggleTag = (tag: string) => {
+  const updateInstructions = {
+    add: () => setInstructions([...instructions, ""]),
+    remove: (index: number) => instructions.length > 1 && setInstructions(instructions.filter((_, i) => i !== index)),
+    update: (index: number, value: string) => {
+      const updated = [...instructions];
+      updated[index] = value;
+      setInstructions(updated);
+    },
+  };
+
+  const handleTagToggle = (tag: string) => {
     setSelectedTags((current) =>
       current.includes(tag)
         ? current.filter((t) => t !== tag)
@@ -115,17 +95,15 @@ const NewRecipe = () => {
     );
   };
 
-  const removeTag = (tagToRemove: string) => {
+  const handleTagRemove = (tagToRemove: string) => {
     setSelectedTags((current) => current.filter((t) => t !== tagToRemove));
   };
 
-  const addNewTag = (newTag: string) => {
+  const handleNewTag = (newTag: string) => {
     const trimmedTag = newTag.trim();
     if (trimmedTag && !selectedTags.includes(trimmedTag)) {
       setSelectedTags((current) => [...current, trimmedTag]);
-      if (!availableTags.includes(trimmedTag)) {
-        setAvailableTags((current) => [...current, trimmedTag].sort());
-      }
+      addTag(trimmedTag);
     }
   };
 
@@ -133,11 +111,9 @@ const NewRecipe = () => {
     if (!householdId || !userId) return;
 
     try {
-      // Filter out empty values
       const filteredIngredients = ingredients.filter(i => i.trim());
       const filteredInstructions = instructions.filter(i => i.trim());
 
-      // Validate
       const validated = recipeSchema.parse({
         title,
         servings,
@@ -219,47 +195,19 @@ const NewRecipe = () => {
 
               <div className="space-y-2">
                 <Label>Velg ikon</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      className="w-full justify-start gap-3 h-12"
-                    >
-                      <img src={getRecipeIcon(selectedIcon)} alt="" className="h-6 w-6" />
-                      <span className="text-muted-foreground">Velg ikon for oppskriften</span>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto max-w-[320px] p-3" align="start">
-                    <div className="grid grid-cols-5 gap-2">
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((iconNum) => (
-                        <button
-                          key={iconNum}
-                          type="button"
-                          onClick={() => {
-                            setSelectedIcon(iconNum);
-                          }}
-                          className={`h-12 w-12 rounded-lg border-2 p-2 transition-all hover:scale-105 ${
-                            selectedIcon === iconNum
-                              ? "border-primary bg-primary/10"
-                              : "border-border bg-card hover:border-primary/50"
-                          }`}
-                        >
-                          <img src={getRecipeIcon(iconNum)} alt="" className="w-full h-full object-contain" />
-                        </button>
-                      ))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                <IconSelector
+                  selectedIcon={selectedIcon}
+                  onIconSelect={setSelectedIcon}
+                />
               </div>
 
               <div className="space-y-2.5">
                 <Label>Ingredienser *</Label>
                 <DynamicTextFields
                   fields={ingredients}
-                  onUpdate={updateField(ingredients, setIngredients).update}
-                  onAdd={updateField(ingredients, setIngredients).add}
-                  onRemove={updateField(ingredients, setIngredients).remove}
+                  onUpdate={updateIngredients.update}
+                  onAdd={updateIngredients.add}
+                  onRemove={updateIngredients.remove}
                   placeholder={() => "F.eks. 2 dl melk"}
                   addButtonLabel="Legg til ingrediens"
                 />
@@ -269,90 +217,23 @@ const NewRecipe = () => {
                 <Label>Fremgangsmåte *</Label>
                 <DynamicTextFields
                   fields={instructions}
-                  onUpdate={updateField(instructions, setInstructions).update}
-                  onAdd={updateField(instructions, setInstructions).add}
-                  onRemove={updateField(instructions, setInstructions).remove}
+                  onUpdate={updateInstructions.update}
+                  onAdd={updateInstructions.add}
+                  onRemove={updateInstructions.remove}
                   placeholder={(index) => `Steg ${index + 1}`}
                   addButtonLabel="Legg til steg"
                 />
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 <Label>Tags</Label>
-                <Popover open={tagSearchOpen} onOpenChange={setTagSearchOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      className="w-full justify-between h-auto min-h-[2.5rem] py-2"
-                    >
-                      <span className="text-muted-foreground">
-                        Velg eller legg til tag
-                      </span>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-full p-0" align="start" side="top">
-                    <Command>
-                      <CommandInput 
-                        placeholder="Søk eller skriv ny tag..." 
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            const value = e.currentTarget.value;
-                            if (value) {
-                              addNewTag(value);
-                              e.currentTarget.value = "";
-                            }
-                          }
-                        }}
-                      />
-                      <CommandList className="max-h-[120px] overflow-y-auto">
-                        <CommandEmpty className="py-2 px-3 text-sm">
-                          Trykk Enter for å legge til ny tag
-                        </CommandEmpty>
-                        <CommandGroup>
-                          {availableTags.map((tag) => (
-                            <CommandItem
-                              key={tag}
-                              value={tag}
-                              onSelect={() => {
-                                toggleTag(tag);
-                              }}
-                            >
-                              <Check
-                                className={`mr-2 h-4 w-4 ${
-                                  selectedTags.includes(tag) ? "opacity-100" : "opacity-0"
-                                }`}
-                              />
-                              {tag}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-                
-                {selectedTags.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {selectedTags.map((tag) => (
-                      <Badge
-                        key={tag}
-                        variant="secondary"
-                        className="gap-1"
-                      >
-                        {tag}
-                        <button
-                          type="button"
-                          onClick={() => removeTag(tag)}
-                          className="ml-1 hover:text-foreground"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
+                <TagSelector
+                  selectedTags={selectedTags}
+                  availableTags={availableTags}
+                  onTagToggle={handleTagToggle}
+                  onTagRemove={handleTagRemove}
+                  onNewTag={handleNewTag}
+                />
               </div>
 
               <div className="flex gap-3 pt-4">
