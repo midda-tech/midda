@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { LogOut, User, Home, Settings as SettingsIcon, Copy, Check, Edit2, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 interface Profile {
@@ -32,7 +31,6 @@ const Settings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [isEditingHouseholdName, setIsEditingHouseholdName] = useState(false);
   const [editedHouseholdName, setEditedHouseholdName] = useState("");
 
@@ -67,7 +65,6 @@ const Settings = () => {
           if (householdData) {
             setHousehold(householdData);
             setEditedHouseholdName(householdData.household_name);
-            setIsAdmin(householdData.created_by === user.id);
             setDefaultServings(householdData.default_servings?.toString() || "4");
           }
         }
@@ -211,20 +208,15 @@ const Settings = () => {
         {household && (
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <Home className="h-5 w-5" />
-                  Husstand
-                </CardTitle>
-                <Badge variant={isAdmin ? "default" : "secondary"}>
-                  {isAdmin ? "Admin" : "Medlem"}
-                </Badge>
-              </div>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <Home className="h-5 w-5" />
+                Husstand
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <Label className="text-sm text-muted-foreground">Aktiv husstand</Label>
-                {isEditingHouseholdName && isAdmin ? (
+                {isEditingHouseholdName ? (
                   <div className="flex items-center gap-2 mt-1">
                     <Input
                       value={editedHouseholdName}
@@ -250,15 +242,13 @@ const Settings = () => {
                 ) : (
                   <div className="flex items-center gap-2 mt-1">
                     <p className="text-foreground font-medium flex-1">{household.household_name}</p>
-                    {isAdmin && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setIsEditingHouseholdName(true)}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setIsEditingHouseholdName(true)}
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 )}
               </div>
@@ -320,7 +310,7 @@ const Settings = () => {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Antall porsjoner som brukes som standard når du lager handlelister
+                Standard antall porsjoner for hele husstanden når dere lager handlelister
               </p>
             </div>
           </CardContent>
