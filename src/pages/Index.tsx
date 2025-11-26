@@ -51,7 +51,7 @@ const Index = () => {
         <div className="max-w-4xl mx-auto text-center space-y-8 animate-fade-in">
           <h1 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-foreground leading-tight tracking-tight">Enkel. Smart.
 Midda.<br />
-            Middagsplanlegging.
+            ​
           </h1>
           
           <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
