@@ -6,31 +6,47 @@ const Index = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    // Check if user is authenticated
-    supabase.auth.getSession().then(({
-      data: {
-        session
-      }
-    }) => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
       if (session) {
-        // User is logged in, redirect to household selection
-        navigate("/velg-husstand");
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("current_household_id")
+          .eq("id", session.user.id)
+          .single();
+
+        if (profile?.current_household_id) {
+          navigate("/hjem");
+        } else {
+          navigate("/velg-husstand");
+        }
       } else {
         setLoading(false);
       }
+    };
+
+    checkSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("current_household_id")
+          .eq("id", session.user.id)
+          .single();
+
+        if (profile?.current_household_id) {
+          navigate("/hjem");
+        } else {
+          navigate("/velg-husstand");
+        }
+      }
     });
 
-    // Listen for auth changes
-    const {
-      data: {
-        subscription
-      }
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        navigate("/velg-husstand");
-      }
-    });
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [navigate]);
   if (loading) {
     return null;
