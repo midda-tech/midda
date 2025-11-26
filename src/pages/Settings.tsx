@@ -83,11 +83,9 @@ const Settings = () => {
     loadData();
   }, [navigate]);
 
-  const handleHouseholdChange = (householdId: string) => {
-    const newHousehold = allHouseholds.find((h) => h.id === householdId);
-    if (newHousehold) {
-      setCurrentHousehold(newHousehold);
-    }
+  const handleHouseholdChange = async (householdId: string) => {
+    // Reload all data to ensure everything is fresh for the new household
+    await loadData();
   };
 
   const handleHouseholdUpdate = (updatedHousehold: Household) => {
