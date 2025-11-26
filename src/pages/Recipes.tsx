@@ -100,7 +100,10 @@ const Recipes = () => {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="flex items-center justify-between px-4 py-4 border-b border-border">
-        <h1 className="font-serif text-2xl font-bold tracking-tight text-foreground">
+        <h1 
+          className="font-serif text-2xl font-bold tracking-tight text-foreground cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={() => navigate("/hjem")}
+        >
           Midda
         </h1>
         <nav className="flex items-center gap-4">
