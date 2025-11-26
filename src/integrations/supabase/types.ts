@@ -97,6 +97,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          default_servings: number | null
           household_name: string
           id: string
           invite_code: string | null
@@ -105,6 +106,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by: string
+          default_servings?: number | null
           household_name: string
           id?: string
           invite_code?: string | null
@@ -113,6 +115,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string
+          default_servings?: number | null
           household_name?: string
           id?: string
           invite_code?: string | null
@@ -124,7 +127,6 @@ export type Database = {
         Row: {
           created_at: string
           current_household_id: string | null
-          default_servings: number | null
           email: string
           first_name: string
           id: string
@@ -134,7 +136,6 @@ export type Database = {
         Insert: {
           created_at?: string
           current_household_id?: string | null
-          default_servings?: number | null
           email: string
           first_name: string
           id: string
@@ -144,7 +145,6 @@ export type Database = {
         Update: {
           created_at?: string
           current_household_id?: string | null
-          default_servings?: number | null
           email?: string
           first_name?: string
           id?: string
