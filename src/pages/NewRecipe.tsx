@@ -1,16 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/AppHeader";
-import { DynamicTextFields } from "@/components/recipe/DynamicTextFields";
-import { IconSelector } from "@/components/recipe/IconSelector";
-import { TagSelector } from "@/components/recipe/TagSelector";
-import { useRecipeTags } from "@/hooks/useRecipeTags";
+import { RecipeForm, RecipeFormData } from "@/components/recipe/RecipeForm";
 import { z } from "zod";
 
 const recipeSchema = z.object({
@@ -28,15 +22,6 @@ const NewRecipe = () => {
   const [saving, setSaving] = useState(false);
   const [householdId, setHouseholdId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-
-  const [title, setTitle] = useState("");
-  const [servings, setServings] = useState(2);
-  const [selectedIcon, setSelectedIcon] = useState(1);
-  const [ingredients, setIngredients] = useState<string[]>([""]);
-  const [instructions, setInstructions] = useState<string[]>([""]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-
-  const { tags: availableTags, addTag } = useRecipeTags(householdId);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -67,65 +52,24 @@ const NewRecipe = () => {
     checkAuth();
   }, [navigate]);
 
-  const updateIngredients = {
-    add: () => setIngredients([...ingredients, ""]),
-    remove: (index: number) => ingredients.length > 1 && setIngredients(ingredients.filter((_, i) => i !== index)),
-    update: (index: number, value: string) => {
-      const updated = [...ingredients];
-      updated[index] = value;
-      setIngredients(updated);
-    },
-  };
-
-  const updateInstructions = {
-    add: () => setInstructions([...instructions, ""]),
-    remove: (index: number) => instructions.length > 1 && setInstructions(instructions.filter((_, i) => i !== index)),
-    update: (index: number, value: string) => {
-      const updated = [...instructions];
-      updated[index] = value;
-      setInstructions(updated);
-    },
-  };
-
-  const handleTagToggle = (tag: string) => {
-    setSelectedTags((current) =>
-      current.includes(tag)
-        ? current.filter((t) => t !== tag)
-        : [...current, tag]
-    );
-  };
-
-  const handleTagRemove = (tagToRemove: string) => {
-    setSelectedTags((current) => current.filter((t) => t !== tagToRemove));
-  };
-
-  const handleNewTag = (newTag: string) => {
-    const trimmedTag = newTag.trim();
-    if (trimmedTag && !selectedTags.includes(trimmedTag)) {
-      setSelectedTags((current) => [...current, trimmedTag]);
-      addTag(trimmedTag);
-    }
-  };
-
-  const handleSave = async () => {
+  const handleSubmit = async (formData: RecipeFormData) => {
     if (!householdId || !userId) return;
 
     try {
-      const filteredIngredients = ingredients.filter(i => i.trim());
-      const filteredInstructions = instructions.filter(i => i.trim());
+      const filteredIngredients = formData.ingredients.filter(i => i.trim());
+      const filteredInstructions = formData.instructions.filter(i => i.trim());
 
       const validated = recipeSchema.parse({
-        title,
-        servings,
-        icon: selectedIcon,
+        title: formData.title,
+        servings: formData.servings,
+        icon: formData.icon,
         ingredients: filteredIngredients,
         instructions: filteredInstructions,
-        tags: selectedTags
+        tags: formData.tags
       });
 
       setSaving(true);
 
-      // Transform instructions to the expected database format
       const instructionsForDb = validated.instructions.map((instruction, index) => ({
         step: index + 1,
         instruction: instruction
@@ -161,7 +105,7 @@ const NewRecipe = () => {
     }
   };
 
-  if (loading) {
+  if (loading || !householdId) {
     return null;
   }
 
@@ -177,90 +121,13 @@ const NewRecipe = () => {
                 Legg til ny oppskrift
               </h2>
 
-              <div className="space-y-2">
-                <Label htmlFor="title">Tittel</Label>
-                <Input
-                  id="title"
-                  placeholder="F.eks. Tomat- og paprikapasta"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="servings">Antall personer</Label>
-                <Input
-                  id="servings"
-                  type="number"
-                  min="1"
-                  max="50"
-                  value={servings}
-                  onChange={(e) => setServings(parseInt(e.target.value) || 1)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Velg ikon</Label>
-                <IconSelector
-                  selectedIcon={selectedIcon}
-                  onIconSelect={setSelectedIcon}
-                />
-              </div>
-
-              <div className="space-y-2.5">
-                <Label>Ingredienser *</Label>
-                <DynamicTextFields
-                  fields={ingredients}
-                  onUpdate={updateIngredients.update}
-                  onAdd={updateIngredients.add}
-                  onRemove={updateIngredients.remove}
-                  placeholder={() => "F.eks. 2 dl melk"}
-                  addButtonLabel="Legg til ingrediens"
-                />
-              </div>
-
-              <div className="space-y-2.5">
-                <Label>Fremgangsmåte *</Label>
-                <DynamicTextFields
-                  fields={instructions}
-                  onUpdate={updateInstructions.update}
-                  onAdd={updateInstructions.add}
-                  onRemove={updateInstructions.remove}
-                  placeholder={(index) => `Steg ${index + 1}`}
-                  addButtonLabel="Legg til steg"
-                />
-              </div>
-
-              <div className="space-y-2.5">
-                <Label>Tags</Label>
-                <TagSelector
-                  selectedTags={selectedTags}
-                  availableTags={availableTags}
-                  onTagToggle={handleTagToggle}
-                  onTagRemove={handleTagRemove}
-                  onNewTag={handleNewTag}
-                />
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <Button
-                  onClick={handleSave}
-                  disabled={saving}
-                  size="lg"
-                  className="flex-1"
-                >
-                  {saving ? "Lagrer..." : "Lagre oppskrift"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="lg"
-                  onClick={() => navigate("/oppskrifter")}
-                  disabled={saving}
-                >
-                  Avbryt
-                </Button>
-              </div>
+              <RecipeForm
+                householdId={householdId}
+                onSubmit={handleSubmit}
+                onCancel={() => navigate("/oppskrifter")}
+                submitLabel="Lagre oppskrift"
+                isSubmitting={saving}
+              />
             </CardContent>
           </Card>
         </div>
