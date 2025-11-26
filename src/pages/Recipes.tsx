@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { BookOpen, ShoppingCart, Settings, Search, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Json } from "@/integrations/supabase/types";
+import { getRecipeIcon } from "@/lib/recipeIcons";
 
 interface Recipe {
   id: string;
@@ -164,9 +165,7 @@ const Recipes = () => {
               <Card key={recipe.id} className="hover:shadow-md transition-shadow cursor-pointer">
                 <CardHeader className="text-center space-y-4 pb-4">
                   <div className="flex justify-center">
-                    <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-3xl">
-                      {recipe.icon ? String.fromCodePoint(recipe.icon) : "🍽️"}
-                    </div>
+                    <img src={getRecipeIcon(recipe.icon)} alt="" className="h-16 w-16" />
                   </div>
                   <CardTitle className="text-xl font-serif text-primary">
                     {recipe.title}
