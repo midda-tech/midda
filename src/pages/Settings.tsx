@@ -6,19 +6,12 @@ import { ProfileSection } from "@/components/settings/ProfileSection";
 import { HouseholdSection } from "@/components/settings/HouseholdSection";
 import { AppSettingsSection } from "@/components/settings/AppSettingsSection";
 import { AccountSection } from "@/components/settings/AccountSection";
+import { Household } from "@/types/household";
 
 interface Profile {
   first_name: string;
   last_name: string;
   email: string;
-}
-
-interface Household {
-  id: string;
-  household_name: string;
-  invite_code: string;
-  created_by: string;
-  default_servings: number | null;
 }
 
 const Settings = () => {
