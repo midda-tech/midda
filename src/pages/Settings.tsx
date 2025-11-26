@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { LogOut, User, Home, Settings as SettingsIcon, Copy, Check } from "lucide-react";
+import { LogOut, User, Home, Settings as SettingsIcon, Copy, Check, Edit2, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 interface Profile {
@@ -20,6 +21,7 @@ interface Household {
   id: string;
   household_name: string;
   invite_code: string;
+  created_by: string;
 }
 
 const Settings = () => {
@@ -30,6 +32,9 @@ const Settings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isEditingHouseholdName, setIsEditingHouseholdName] = useState(false);
+  const [editedHouseholdName, setEditedHouseholdName] = useState("");
 
   useEffect(() => {
     const loadData = async () => {
@@ -57,12 +62,14 @@ const Settings = () => {
         if (profileData.current_household_id) {
           const { data: householdData } = await supabase
             .from("households")
-            .select("id, household_name, invite_code")
+            .select("id, household_name, invite_code, created_by")
             .eq("id", profileData.current_household_id)
             .maybeSingle();
 
           if (householdData) {
             setHousehold(householdData);
+            setEditedHouseholdName(householdData.household_name);
+            setIsAdmin(householdData.created_by === user.id);
           }
         }
       }
@@ -120,6 +127,38 @@ const Settings = () => {
     }
   };
 
+  const handleSaveHouseholdName = async () => {
+    if (!household || !editedHouseholdName.trim()) {
+      toast.error("Husstandsnavn kan ikke være tomt");
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Ikke autentisert");
+
+      const { error } = await supabase
+        .from("households")
+        .update({ household_name: editedHouseholdName.trim() })
+        .eq("id", household.id);
+
+      if (error) throw error;
+
+      setHousehold({ ...household, household_name: editedHouseholdName.trim() });
+      setIsEditingHouseholdName(false);
+      toast.success("Husstandsnavn oppdatert");
+    } catch (error: any) {
+      toast.error(error.message || "Kunne ikke oppdatere husstandsnavn");
+    }
+  };
+
+  const handleCancelEdit = () => {
+    if (household) {
+      setEditedHouseholdName(household.household_name);
+    }
+    setIsEditingHouseholdName(false);
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -171,15 +210,56 @@ const Settings = () => {
         {household && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <Home className="h-5 w-5" />
-                Husstand
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Home className="h-5 w-5" />
+                  Husstand
+                </CardTitle>
+                <Badge variant={isAdmin ? "default" : "secondary"}>
+                  {isAdmin ? "Admin" : "Medlem"}
+                </Badge>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <Label className="text-sm text-muted-foreground">Aktiv husstand</Label>
-                <p className="text-foreground font-medium">{household.household_name}</p>
+                {isEditingHouseholdName && isAdmin ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <Input
+                      value={editedHouseholdName}
+                      onChange={(e) => setEditedHouseholdName(e.target.value)}
+                      placeholder="Husstandsnavn"
+                      className="flex-1"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleSaveHouseholdName}
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleCancelEdit}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-foreground font-medium flex-1">{household.household_name}</p>
+                    {isAdmin && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setIsEditingHouseholdName(true)}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
               <div>
                 <Label className="text-sm text-muted-foreground">Invitasjonskode</Label>
