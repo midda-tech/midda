@@ -6,10 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, ShoppingCart, Settings, Search, Plus } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Json } from "@/integrations/supabase/types";
 import { getRecipeIcon } from "@/lib/recipeIcons";
+import { AppHeader } from "@/components/AppHeader";
 
 interface Recipe {
   id: string;
@@ -99,31 +100,7 @@ const Recipes = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="flex items-center justify-between px-4 py-4 border-b border-border">
-        <h1 
-          className="font-serif text-2xl font-bold tracking-tight text-foreground cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={() => navigate("/hjem")}
-        >
-          Midda
-        </h1>
-        <nav className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" className="gap-2">
-            <BookOpen className="h-4 w-4" />
-            <span className="hidden sm:inline">Oppskrifter</span>
-          </Button>
-          <Button variant="ghost" size="sm" className="gap-2" onClick={() => navigate("/hjem")}>
-            <ShoppingCart className="h-4 w-4" />
-            <span className="hidden sm:inline">Handlelister</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/innstillinger")}
-          >
-            <Settings className="h-5 w-5" />
-          </Button>
-        </nav>
-      </header>
+      <AppHeader />
       
       <main className="flex-1 p-4 sm:p-6">
         <div className="max-w-6xl mx-auto space-y-6">
