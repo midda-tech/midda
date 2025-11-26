@@ -121,24 +121,24 @@ const ViewRecipe = () => {
 
           <Card>
             <CardContent className="p-6 sm:p-8">
-              <div className="flex flex-col items-center text-center space-y-6 pb-6 border-b">
+              <div className="flex flex-col items-center text-center space-y-4 pb-6 border-b">
                 <img 
                   src={getRecipeIcon(recipe.icon)} 
                   alt="" 
-                  className="h-24 w-24 sm:h-32 sm:w-32" 
+                  className="h-16 w-16" 
                 />
-                <div className="space-y-3">
-                  <h1 className="font-serif text-3xl sm:text-4xl font-bold text-foreground">
+                <div className="space-y-2">
+                  <h1 className="font-serif text-2xl sm:text-3xl font-bold text-foreground">
                     {recipe.title}
                   </h1>
-                  <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                  <div className="flex items-center justify-center gap-1.5 text-muted-foreground">
                     <Users className="h-4 w-4" />
-                    <span className="text-lg">{recipe.servings} personer</span>
+                    <span>{recipe.servings} personer</span>
                   </div>
                   {tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 justify-center pt-2">
+                    <div className="flex flex-wrap gap-1.5 justify-center">
                       {tags.map((tag: string, idx: number) => (
-                        <Badge key={idx} variant="secondary">
+                        <Badge key={idx} variant="secondary" className="text-xs">
                           {tag}
                         </Badge>
                       ))}
@@ -147,38 +147,38 @@ const ViewRecipe = () => {
                 </div>
               </div>
 
-              <div className="grid sm:grid-cols-2 gap-8 pt-8">
-                <div className="space-y-4">
-                  <h2 className="font-serif text-2xl font-bold text-foreground">
+              <div className="grid sm:grid-cols-2 gap-6 sm:gap-8 pt-6">
+                <div className="space-y-3">
+                  <h2 className="font-serif text-xl font-bold text-foreground">
                     Ingredienser
                   </h2>
-                  <ul className="space-y-3">
+                  <ul className="space-y-2">
                     {ingredients.map((ingredient: string, idx: number) => (
                       <li 
                         key={idx}
-                        className="flex items-start gap-3 text-base leading-relaxed"
+                        className="flex items-start gap-2 leading-relaxed"
                       >
-                        <span className="text-primary font-medium mt-1">•</span>
-                        <span>{ingredient}</span>
+                        <span className="text-primary font-bold text-lg leading-none mt-0.5">•</span>
+                        <span className="flex-1">{ingredient}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                <div className="space-y-4">
-                  <h2 className="font-serif text-2xl font-bold text-foreground">
+                <div className="space-y-3">
+                  <h2 className="font-serif text-xl font-bold text-foreground">
                     Fremgangsmåte
                   </h2>
-                  <ol className="space-y-4">
+                  <ol className="space-y-3">
                     {instructions.map((inst: RecipeInstruction, idx: number) => (
                       <li 
                         key={idx}
-                        className="flex gap-4"
+                        className="flex gap-3 items-start"
                       >
-                        <span className="flex-shrink-0 flex items-center justify-center h-7 w-7 rounded-full bg-primary text-primary-foreground font-medium text-sm">
+                        <span className="flex-shrink-0 flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground font-semibold text-sm">
                           {inst.step}
                         </span>
-                        <p className="text-base leading-relaxed pt-0.5">
+                        <p className="flex-1 leading-relaxed">
                           {inst.instruction}
                         </p>
                       </li>
