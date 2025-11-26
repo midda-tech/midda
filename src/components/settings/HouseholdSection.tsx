@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Home, Copy, Check, Edit2, X, Plus } from "lucide-react";
+import { Home, Copy, Check, Edit2, X, Plus, Users } from "lucide-react";
 import { toast } from "sonner";
 
 interface Household {
@@ -40,6 +40,48 @@ export const HouseholdSection = ({
   const [inviteCode, setInviteCode] = useState("");
   const [newHouseholdName, setNewHouseholdName] = useState("");
   const [processing, setProcessing] = useState(false);
+  const [members, setMembers] = useState<Array<{ user_id: string; first_name: string; last_name: string }>>([]);
+  const [loadingMembers, setLoadingMembers] = useState(true);
+
+  useEffect(() => {
+    if (!currentHousehold?.id) {
+      setLoadingMembers(false);
+      return;
+    }
+
+    const fetchMembers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("household_members")
+          .select(`
+            user_id,
+            joined_at,
+            profiles:user_id (
+              first_name,
+              last_name
+            )
+          `)
+          .eq("household_id", currentHousehold.id)
+          .order("joined_at", { ascending: true });
+
+        if (error) throw error;
+
+        const formattedMembers = data?.map((member: any) => ({
+          user_id: member.user_id,
+          first_name: member.profiles.first_name,
+          last_name: member.profiles.last_name,
+        })) || [];
+
+        setMembers(formattedMembers);
+      } catch (error: any) {
+        console.error("Error fetching household members:", error);
+      } finally {
+        setLoadingMembers(false);
+      }
+    };
+
+    fetchMembers();
+  }, [currentHousehold?.id]);
 
   if (!currentHousehold) return null;
 
@@ -255,6 +297,33 @@ export const HouseholdSection = ({
           </div>
           <p className="text-xs text-muted-foreground">
             Del denne koden med andre for å invitere dem til husstanden
+          </p>
+        </div>
+
+        {/* Household Members */}
+        <div className="space-y-2">
+          <Label className="text-sm text-muted-foreground flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Medlemmer
+          </Label>
+          {loadingMembers ? (
+            <p className="text-sm text-muted-foreground">Laster...</p>
+          ) : members.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Ingen medlemmer funnet</p>
+          ) : (
+            <div className="space-y-1">
+              {members.map((member) => (
+                <p
+                  key={member.user_id}
+                  className="text-foreground text-sm"
+                >
+                  {member.first_name} {member.last_name}
+                </p>
+              ))}
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">
+            {members.length} av 8 medlemmer
           </p>
         </div>
 
