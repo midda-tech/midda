@@ -56,7 +56,8 @@ const Auth = () => {
 
         if (error) throw error;
         
-        toast.success("Konto opprettet! Vennligst sjekk e-posten din for bekreftelse.");
+        toast.success("Konto opprettet! Du kan nå logge inn.");
+        setIsLogin(true);
       }
     } catch (error: any) {
       toast.error(error.message || "Noe gikk galt");
