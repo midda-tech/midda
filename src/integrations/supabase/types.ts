@@ -249,10 +249,6 @@ export type Database = {
         Args: { p_invite_code: string }
         Returns: Json
       }
-      users_share_household: {
-        Args: { _user_id_1: string; _user_id_2: string }
-        Returns: boolean
-      }
     }
     Enums: {
       [_ in never]: never
