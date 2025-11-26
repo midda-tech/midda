@@ -261,15 +261,26 @@ const NewRecipe = () => {
 
               <div className="space-y-3">
                 <Label>Ingredienser *</Label>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {ingredients.map((ingredient, index) => (
-                    <div key={index} className="space-y-2">
+                    <div key={index} className="space-y-1.5">
                       <Textarea
                         placeholder="F.eks. 2 dl melk"
                         value={ingredient}
                         onChange={(e) => updateIngredient(index, e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            addIngredient();
+                            // Focus next input after a brief delay
+                            setTimeout(() => {
+                              const nextInput = document.querySelectorAll('textarea[placeholder="F.eks. 2 dl melk"]')[index + 1] as HTMLTextAreaElement;
+                              if (nextInput) nextInput.focus();
+                            }, 0);
+                          }
+                        }}
                         rows={1}
-                        className="resize-none"
+                        className="resize-none py-2.5 text-sm"
                       />
                       {ingredients.length > 1 && (
                         <Button
@@ -277,7 +288,7 @@ const NewRecipe = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => removeIngredient(index)}
-                          className="h-8 text-muted-foreground"
+                          className="h-7 text-xs text-muted-foreground hover:text-foreground"
                         >
                           <X className="h-3 w-3 mr-1" />
                           Fjern
@@ -289,25 +300,39 @@ const NewRecipe = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
                   onClick={addIngredient}
-                  className="gap-2"
+                  className="w-full h-9 border-dashed gap-2 text-sm text-muted-foreground hover:text-foreground"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3.5 w-3.5" />
                   Legg til ingrediens
                 </Button>
               </div>
 
               <div className="space-y-3">
                 <Label>Fremgangsmåte *</Label>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {instructions.map((instruction, index) => (
-                    <div key={index} className="space-y-2">
+                    <div key={index} className="space-y-1.5">
                       <Textarea
                         placeholder={`Steg ${index + 1}`}
                         value={instruction}
                         onChange={(e) => updateInstruction(index, e.target.value)}
-                        rows={3}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            addInstruction();
+                            // Focus next input after a brief delay
+                            setTimeout(() => {
+                              const allTextareas = Array.from(document.querySelectorAll('textarea')).filter(
+                                ta => ta.placeholder.startsWith('Steg ')
+                              ) as HTMLTextAreaElement[];
+                              const nextInput = allTextareas[index + 1];
+                              if (nextInput) nextInput.focus();
+                            }, 0);
+                          }
+                        }}
+                        rows={2}
+                        className="text-sm"
                       />
                       {instructions.length > 1 && (
                         <Button
@@ -315,7 +340,7 @@ const NewRecipe = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => removeInstruction(index)}
-                          className="h-8 text-muted-foreground"
+                          className="h-7 text-xs text-muted-foreground hover:text-foreground"
                         >
                           <X className="h-3 w-3 mr-1" />
                           Fjern
@@ -327,11 +352,10 @@ const NewRecipe = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
                   onClick={addInstruction}
-                  className="gap-2"
+                  className="w-full h-9 border-dashed gap-2 text-sm text-muted-foreground hover:text-foreground"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3.5 w-3.5" />
                   Legg til steg
                 </Button>
               </div>
