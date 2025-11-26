@@ -94,38 +94,24 @@ const SelectHousehold = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Ikke autentisert");
 
-      const { data: household, error: householdError } = await supabase
-        .from("households")
-        .select()
-        .eq("invite_code", inviteCode.toUpperCase())
-        .single();
+      const { data, error } = await supabase
+        .rpc("join_household_by_invite", { p_invite_code: inviteCode.toUpperCase() });
 
-      if (householdError || !household) {
-        toast.error("Ugyldig invitasjonskode");
+      if (error) {
+        toast.error(error.message || "Ugyldig invitasjonskode");
         return;
       }
 
-      const { error: memberError } = await supabase
-        .from("household_members")
-        .insert({ household_id: household.id, user_id: user.id });
-
-      if (memberError) {
-        if (memberError.code === "23505") {
-          toast.error("Du er allerede medlem av denne husstanden");
-        } else {
-          throw memberError;
-        }
-        return;
-      }
+      const result = data as { household_id: string; household_name: string; message: string };
 
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({ current_household_id: household.id })
+        .update({ current_household_id: result.household_id })
         .eq("id", user.id);
 
       if (profileError) throw profileError;
 
-      toast.success(`Ble med i ${household.household_name}!`);
+      toast.success(`Ble med i ${result.household_name}!`);
       navigate("/hjem");
     } catch (error: any) {
       toast.error(error.message || "Kunne ikke bli med i husstand");
