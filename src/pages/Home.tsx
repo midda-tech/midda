@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, ShoppingCart, Settings } from "lucide-react";
-import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { ShoppingCart } from "lucide-react";
+import { AppHeader } from "@/components/AppHeader";
 import bookIcon from "@/assets/book-icon.png";
 import cartIcon from "@/assets/shopping-cart-icon.png";
 
@@ -44,31 +44,7 @@ const Home = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="flex items-center justify-between px-4 py-4 border-b border-border">
-        <h1 
-          className="font-serif text-2xl font-bold tracking-tight text-foreground cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={() => navigate("/hjem")}
-        >
-          Midda
-        </h1>
-        <nav className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" className="gap-2" onClick={() => navigate("/oppskrifter")}>
-            <BookOpen className="h-4 w-4" />
-            <span className="hidden sm:inline">Oppskrifter</span>
-          </Button>
-          <Button variant="ghost" size="sm" className="gap-2">
-            <ShoppingCart className="h-4 w-4" />
-            <span className="hidden sm:inline">Handlelister</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/innstillinger")}
-          >
-            <Settings className="h-5 w-5" />
-          </Button>
-        </nav>
-      </header>
+      <AppHeader />
       
       <main className="flex-1 p-4 sm:p-6">
         <div className="max-w-5xl mx-auto">
@@ -87,7 +63,6 @@ const Home = () => {
                   </CardDescription>
                 </div>
                 <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                  <BookOpen className="h-3.5 w-3.5" />
                   <span>10 oppskrifter</span>
                 </div>
               </CardHeader>
