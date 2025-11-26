@@ -241,6 +241,10 @@ export type Database = {
     }
     Functions: {
       generate_invite_code: { Args: never; Returns: string }
+      is_household_member: {
+        Args: { p_household_id: string }
+        Returns: boolean
+      }
       join_household_by_invite: {
         Args: { p_invite_code: string }
         Returns: Json
