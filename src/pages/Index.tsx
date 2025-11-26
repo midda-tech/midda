@@ -49,8 +49,7 @@ const Index = () => {
       {/* Hero Section */}
       <main className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="max-w-4xl mx-auto text-center space-y-8 animate-fade-in">
-          <h1 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-foreground leading-tight tracking-tight">Enkel. Smart. 
-Midda.​<br />
+          <h1 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-foreground leading-tight tracking-tight">Enkel. Smart.  Midda.​​<br />
             ​
           </h1>
           
