@@ -156,6 +156,7 @@ export const HouseholdSection = ({
         .insert({
           household_name: newHouseholdName.trim(),
           created_by: user.id,
+          default_servings: 4,
         })
         .select()
         .single();
