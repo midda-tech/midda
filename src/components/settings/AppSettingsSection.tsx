@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,11 @@ export const AppSettingsSection = ({
 }: AppSettingsSectionProps) => {
   const [servings, setServings] = useState(defaultServings);
   const [saving, setSaving] = useState(false);
+
+  // Update internal state when prop changes (e.g., household switch)
+  useEffect(() => {
+    setServings(defaultServings);
+  }, [defaultServings]);
 
   const handleSave = async () => {
     const servingsNum = parseInt(servings);
