@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ChefHat } from "lucide-react";
+
 
 const Index = () => {
   const navigate = useNavigate();
@@ -38,7 +38,6 @@ const Index = () => {
       {/* Navigation */}
       <nav className="w-full px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <ChefHat className="w-8 h-8 text-primary" strokeWidth={2.5} />
           <span className="font-display text-2xl font-bold text-foreground">Midda</span>
         </div>
         <Button 
