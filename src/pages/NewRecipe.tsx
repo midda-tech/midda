@@ -259,7 +259,7 @@ const NewRecipe = () => {
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 <Label>Ingredienser *</Label>
                 <div className="space-y-2">
                   {ingredients.map((ingredient, index) => (
@@ -280,7 +280,7 @@ const NewRecipe = () => {
                           }
                         }}
                         rows={1}
-                        className="resize-none py-2.5 text-sm"
+                        className="resize-none py-2 text-sm min-h-[2.5rem]"
                       />
                       {ingredients.length > 1 && (
                         <Button
@@ -301,14 +301,14 @@ const NewRecipe = () => {
                   type="button"
                   variant="outline"
                   onClick={addIngredient}
-                  className="w-full h-9 border-dashed gap-2 text-sm text-muted-foreground hover:text-foreground"
+                  className="w-full h-8 border-dashed gap-2 text-sm text-muted-foreground hover:text-foreground"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   Legg til ingrediens
                 </Button>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 <Label>Fremgangsmåte *</Label>
                 <div className="space-y-2">
                   {instructions.map((instruction, index) => (
@@ -332,7 +332,7 @@ const NewRecipe = () => {
                           }
                         }}
                         rows={2}
-                        className="text-sm"
+                        className="text-sm py-2"
                       />
                       {instructions.length > 1 && (
                         <Button
@@ -353,7 +353,7 @@ const NewRecipe = () => {
                   type="button"
                   variant="outline"
                   onClick={addInstruction}
-                  className="w-full h-9 border-dashed gap-2 text-sm text-muted-foreground hover:text-foreground"
+                  className="w-full h-8 border-dashed gap-2 text-sm text-muted-foreground hover:text-foreground"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   Legg til steg
