@@ -329,8 +329,8 @@ const NewRecipe = () => {
                             }, 0);
                           }
                         }}
-                        rows={2}
-                        className="text-sm py-2 pr-8"
+                        rows={1}
+                        className="text-sm py-2 pr-8 min-h-[2.5rem]"
                       />
                       {instructions.length > 1 && (
                         <button
