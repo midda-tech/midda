@@ -80,6 +80,10 @@ const Recipes = () => {
       ];
 
       setRecipes(allRecipes);
+      
+      // Set default tab based on household recipe count
+      const householdCount = householdRecipes?.length || 0;
+      setActiveTab(householdCount > 0 ? "mine" : "all");
     } catch (error) {
       console.error("Error fetching recipes:", error);
       toast.error("Kunne ikke laste oppskrifter");
