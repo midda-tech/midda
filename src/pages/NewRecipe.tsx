@@ -1,18 +1,18 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Plus, X, Check } from "lucide-react";
+import { X, Check } from "lucide-react";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/AppHeader";
 import { getRecipeIcon } from "@/lib/recipeIcons";
+import { DynamicTextFields } from "@/components/recipe/DynamicTextFields";
 import { z } from "zod";
 
 const recipeSchema = z.object({
@@ -97,37 +97,15 @@ const NewRecipe = () => {
     fetchTags();
   }, [householdId]);
 
-  const addIngredient = () => {
-    setIngredients([...ingredients, ""]);
-  };
-
-  const removeIngredient = (index: number) => {
-    if (ingredients.length > 1) {
-      setIngredients(ingredients.filter((_, i) => i !== index));
-    }
-  };
-
-  const updateIngredient = (index: number, value: string) => {
-    const newIngredients = [...ingredients];
-    newIngredients[index] = value;
-    setIngredients(newIngredients);
-  };
-
-  const addInstruction = () => {
-    setInstructions([...instructions, ""]);
-  };
-
-  const removeInstruction = (index: number) => {
-    if (instructions.length > 1) {
-      setInstructions(instructions.filter((_, i) => i !== index));
-    }
-  };
-
-  const updateInstruction = (index: number, value: string) => {
-    const newInstructions = [...instructions];
-    newInstructions[index] = value;
-    setInstructions(newInstructions);
-  };
+  const updateField = (fields: string[], setFields: (fields: string[]) => void) => ({
+    add: () => setFields([...fields, ""]),
+    remove: (index: number) => fields.length > 1 && setFields(fields.filter((_, i) => i !== index)),
+    update: (index: number, value: string) => {
+      const updated = [...fields];
+      updated[index] = value;
+      setFields(updated);
+    },
+  });
 
   const toggleTag = (tag: string) => {
     setSelectedTags((current) =>
@@ -261,99 +239,26 @@ const NewRecipe = () => {
 
               <div className="space-y-2.5">
                 <Label>Ingredienser *</Label>
-                <div className="space-y-2">
-                  {ingredients.map((ingredient, index) => (
-                    <div key={index} className="relative group">
-                      <Textarea
-                        placeholder="F.eks. 2 dl melk"
-                        value={ingredient}
-                        onChange={(e) => updateIngredient(index, e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault();
-                            addIngredient();
-                            // Focus next input after a brief delay
-                            setTimeout(() => {
-                              const nextInput = document.querySelectorAll('textarea[placeholder="F.eks. 2 dl melk"]')[index + 1] as HTMLTextAreaElement;
-                              if (nextInput) nextInput.focus();
-                            }, 0);
-                          }
-                        }}
-                        rows={1}
-                        className="resize-none py-2 text-sm min-h-[2.5rem] pr-8"
-                      />
-                      {ingredients.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeIngredient(index)}
-                          className="absolute top-2 right-2 p-1 rounded-md opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-muted"
-                          aria-label="Fjern ingrediens"
-                        >
-                          <X className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={addIngredient}
-                  className="w-full h-8 border-dashed gap-2 text-sm text-muted-foreground hover:text-foreground"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Legg til ingrediens
-                </Button>
+                <DynamicTextFields
+                  fields={ingredients}
+                  onUpdate={updateField(ingredients, setIngredients).update}
+                  onAdd={updateField(ingredients, setIngredients).add}
+                  onRemove={updateField(ingredients, setIngredients).remove}
+                  placeholder={() => "F.eks. 2 dl melk"}
+                  addButtonLabel="Legg til ingrediens"
+                />
               </div>
 
               <div className="space-y-2.5">
                 <Label>Fremgangsmåte *</Label>
-                <div className="space-y-2">
-                  {instructions.map((instruction, index) => (
-                    <div key={index} className="relative group">
-                      <Textarea
-                        placeholder={`Steg ${index + 1}`}
-                        value={instruction}
-                        onChange={(e) => updateInstruction(index, e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault();
-                            addInstruction();
-                            // Focus next input after a brief delay
-                            setTimeout(() => {
-                              const allTextareas = Array.from(document.querySelectorAll('textarea')).filter(
-                                ta => ta.placeholder.startsWith('Steg ')
-                              ) as HTMLTextAreaElement[];
-                              const nextInput = allTextareas[index + 1];
-                              if (nextInput) nextInput.focus();
-                            }, 0);
-                          }
-                        }}
-                        rows={1}
-                        className="resize-none text-sm py-2 pr-8 min-h-[2.5rem]"
-                      />
-                      {instructions.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeInstruction(index)}
-                          className="absolute top-2 right-2 p-1 rounded-md opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-muted"
-                          aria-label="Fjern steg"
-                        >
-                          <X className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={addInstruction}
-                  className="w-full h-8 border-dashed gap-2 text-sm text-muted-foreground hover:text-foreground"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Legg til steg
-                </Button>
+                <DynamicTextFields
+                  fields={instructions}
+                  onUpdate={updateField(instructions, setInstructions).update}
+                  onAdd={updateField(instructions, setInstructions).add}
+                  onRemove={updateField(instructions, setInstructions).remove}
+                  placeholder={(index) => `Steg ${index + 1}`}
+                  addButtonLabel="Legg til steg"
+                />
               </div>
 
               <div className="space-y-3">
