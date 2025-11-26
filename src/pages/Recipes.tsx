@@ -167,7 +167,7 @@ const Recipes = () => {
                   <div className="flex justify-center">
                     <img src={getRecipeIcon(recipe.icon)} alt="" className="h-16 w-16" />
                   </div>
-                  <CardTitle className="text-xl font-serif text-primary">
+                  <CardTitle className="text-xl font-serif text-foreground">
                     {recipe.title}
                   </CardTitle>
                   {recipe.tags && Array.isArray(recipe.tags) && recipe.tags.length > 0 && (
