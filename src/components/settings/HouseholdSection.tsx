@@ -51,26 +51,39 @@ export const HouseholdSection = ({
 
     const fetchMembers = async () => {
       try {
-        const { data, error } = await supabase
+        // First get household members
+        const { data: memberData, error: membersError } = await supabase
           .from("household_members")
-          .select(`
-            user_id,
-            joined_at,
-            profiles:user_id (
-              first_name,
-              last_name
-            )
-          `)
+          .select("user_id, joined_at")
           .eq("household_id", currentHousehold.id)
           .order("joined_at", { ascending: true });
 
-        if (error) throw error;
+        if (membersError) throw membersError;
+        
+        if (!memberData || memberData.length === 0) {
+          setMembers([]);
+          setLoadingMembers(false);
+          return;
+        }
 
-        const formattedMembers = data?.map((member: any) => ({
-          user_id: member.user_id,
-          first_name: member.profiles.first_name,
-          last_name: member.profiles.last_name,
-        })) || [];
+        // Then get profiles for those user_ids
+        const userIds = memberData.map(m => m.user_id);
+        const { data: profileData, error: profilesError } = await supabase
+          .from("profiles")
+          .select("id, first_name, last_name")
+          .in("id", userIds);
+
+        if (profilesError) throw profilesError;
+
+        // Combine the data
+        const formattedMembers = memberData.map(member => {
+          const profile = profileData?.find(p => p.id === member.user_id);
+          return {
+            user_id: member.user_id,
+            first_name: profile?.first_name || "",
+            last_name: profile?.last_name || "",
+          };
+        });
 
         setMembers(formattedMembers);
       } catch (error: any) {
@@ -322,7 +335,7 @@ export const HouseholdSection = ({
                   key={member.user_id}
                   className="text-sm text-foreground"
                 >
-                  {member.first_name} {member.last_name}
+                  {member.first_name}
                 </div>
               ))}
             </div>
