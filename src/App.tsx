@@ -9,6 +9,7 @@ import SelectHousehold from "./pages/SelectHousehold";
 import Home from "./pages/Home";
 import Recipes from "./pages/Recipes";
 import NewRecipe from "./pages/NewRecipe";
+import ViewRecipe from "./pages/ViewRecipe";
 import EditRecipe from "./pages/EditRecipe";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -28,7 +29,8 @@ const App = () => (
           <Route path="/hjem" element={<Home />} />
           <Route path="/oppskrifter" element={<Recipes />} />
           <Route path="/oppskrifter/ny" element={<NewRecipe />} />
-          <Route path="/oppskrifter/:id" element={<EditRecipe />} />
+          <Route path="/oppskrifter/:id" element={<ViewRecipe />} />
+          <Route path="/oppskrifter/:id/rediger" element={<EditRecipe />} />
           <Route path="/innstillinger" element={<Settings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
