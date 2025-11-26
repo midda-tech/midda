@@ -27,7 +27,7 @@ const Recipes = () => {
   const [loading, setLoading] = useState(true);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<"all" | "system">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "mine">("all");
 
   useEffect(() => {
     const checkAuthAndFetchRecipes = async () => {
@@ -87,11 +87,11 @@ const Recipes = () => {
 
   const filteredRecipes = recipes.filter(recipe => {
     const matchesSearch = recipe.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTab = activeTab === "all" || (activeTab === "system" && recipe.isSystem);
+    const matchesTab = activeTab === "all" || (activeTab === "mine" && !recipe.isSystem);
     return matchesSearch && matchesTab;
   });
 
-  const systemRecipesCount = recipes.filter(r => r.isSystem).length;
+  const householdRecipesCount = recipes.filter(r => !r.isSystem).length;
 
   if (loading) {
     return null;
@@ -149,13 +149,13 @@ const Recipes = () => {
             />
           </div>
 
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "all" | "system")}>
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "all" | "mine")}>
             <TabsList>
-              <TabsTrigger value="all">
-                Alle ({recipes.length})
+              <TabsTrigger value="mine">
+                Mine oppskrifter ({householdRecipesCount})
               </TabsTrigger>
-              <TabsTrigger value="system">
-                Standardoppskrifter ({systemRecipesCount})
+              <TabsTrigger value="all">
+                Alle oppskrifter ({recipes.length})
               </TabsTrigger>
             </TabsList>
           </Tabs>
