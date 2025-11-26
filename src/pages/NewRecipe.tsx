@@ -230,8 +230,8 @@ const NewRecipe = () => {
                       <span className="text-muted-foreground">Velg ikon for oppskriften</span>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-full p-3" align="start">
-                    <div className="grid grid-cols-5 gap-2">
+                  <PopoverContent className="w-[200px] p-2" align="start">
+                    <div className="grid grid-cols-5 gap-1">
                       {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((iconNum) => (
                         <button
                           key={iconNum}
@@ -239,9 +239,9 @@ const NewRecipe = () => {
                           onClick={() => {
                             setSelectedIcon(iconNum);
                           }}
-                          className={`aspect-square rounded-lg border-2 p-2 transition-all hover:scale-105 ${
+                          className={`aspect-square rounded border p-1 transition-all hover:scale-110 ${
                             selectedIcon === iconNum
-                              ? "border-primary bg-primary/5"
+                              ? "border-primary bg-primary/10"
                               : "border-border bg-card hover:border-primary/50"
                           }`}
                         >
