@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Plus, X, Check } from "lucide-react";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/AppHeader";
 import { getRecipeIcon } from "@/lib/recipeIcons";
@@ -33,7 +36,9 @@ const NewRecipe = () => {
   const [selectedIcon, setSelectedIcon] = useState(1);
   const [ingredients, setIngredients] = useState<string[]>([""]);
   const [instructions, setInstructions] = useState<string[]>([""]);
-  const [tags, setTags] = useState<string[]>([""]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [tagSearchOpen, setTagSearchOpen] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -63,6 +68,34 @@ const NewRecipe = () => {
 
     checkAuth();
   }, [navigate]);
+
+  // Fetch all unique tags from both system and household recipes
+  useEffect(() => {
+    const fetchTags = async () => {
+      if (!householdId) return;
+
+      const [systemResult, householdResult] = await Promise.all([
+        supabase.from("system_recipes").select("tags"),
+        supabase.from("household_recipes").select("tags").eq("household_id", householdId)
+      ]);
+
+      const allTags = new Set<string>();
+      
+      [...(systemResult.data || []), ...(householdResult.data || [])].forEach((recipe) => {
+        if (Array.isArray(recipe.tags)) {
+          recipe.tags.forEach((tag: string) => {
+            if (tag && tag.trim()) {
+              allTags.add(tag.trim());
+            }
+          });
+        }
+      });
+
+      setAvailableTags(Array.from(allTags).sort());
+    };
+
+    fetchTags();
+  }, [householdId]);
 
   const addIngredient = () => {
     setIngredients([...ingredients, ""]);
@@ -96,18 +129,26 @@ const NewRecipe = () => {
     setInstructions(newInstructions);
   };
 
-  const addTag = () => {
-    setTags([...tags, ""]);
+  const toggleTag = (tag: string) => {
+    setSelectedTags((current) =>
+      current.includes(tag)
+        ? current.filter((t) => t !== tag)
+        : [...current, tag]
+    );
   };
 
-  const removeTag = (index: number) => {
-    setTags(tags.filter((_, i) => i !== index));
+  const removeTag = (tagToRemove: string) => {
+    setSelectedTags((current) => current.filter((t) => t !== tagToRemove));
   };
 
-  const updateTag = (index: number, value: string) => {
-    const newTags = [...tags];
-    newTags[index] = value;
-    setTags(newTags);
+  const addNewTag = (newTag: string) => {
+    const trimmedTag = newTag.trim();
+    if (trimmedTag && !selectedTags.includes(trimmedTag)) {
+      setSelectedTags((current) => [...current, trimmedTag]);
+      if (!availableTags.includes(trimmedTag)) {
+        setAvailableTags((current) => [...current, trimmedTag].sort());
+      }
+    }
   };
 
   const handleSave = async () => {
@@ -117,7 +158,6 @@ const NewRecipe = () => {
       // Filter out empty values
       const filteredIngredients = ingredients.filter(i => i.trim());
       const filteredInstructions = instructions.filter(i => i.trim());
-      const filteredTags = tags.filter(t => t.trim());
 
       // Validate
       const validated = recipeSchema.parse({
@@ -126,7 +166,7 @@ const NewRecipe = () => {
         icon: selectedIcon,
         ingredients: filteredIngredients,
         instructions: filteredInstructions,
-        tags: filteredTags
+        tags: selectedTags
       });
 
       setSaving(true);
@@ -220,62 +260,49 @@ const NewRecipe = () => {
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label>Ingredienser</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={addIngredient}
-                    className="gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Legg til
-                  </Button>
-                </div>
-                <div className="space-y-2">
+                <Label>Ingredienser *</Label>
+                <div className="space-y-3">
                   {ingredients.map((ingredient, index) => (
-                    <div key={index} className="flex gap-2">
-                      <Input
-                        placeholder={`Ingrediens ${index + 1}`}
+                    <div key={index} className="space-y-2">
+                      <Textarea
+                        placeholder="F.eks. 2 dl melk"
                         value={ingredient}
                         onChange={(e) => updateIngredient(index, e.target.value)}
+                        rows={1}
+                        className="resize-none"
                       />
                       {ingredients.length > 1 && (
                         <Button
                           type="button"
                           variant="ghost"
-                          size="icon"
+                          size="sm"
                           onClick={() => removeIngredient(index)}
+                          className="h-8 text-muted-foreground"
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-3 w-3 mr-1" />
+                          Fjern
                         </Button>
                       )}
                     </div>
                   ))}
                 </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addIngredient}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Legg til ingrediens
+                </Button>
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label>Fremgangsmåte</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={addInstruction}
-                    className="gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Legg til
-                  </Button>
-                </div>
+                <Label>Fremgangsmåte *</Label>
                 <div className="space-y-3">
                   {instructions.map((instruction, index) => (
-                    <div key={index} className="flex gap-2 items-start">
-                      <span className="text-muted-foreground mt-3 min-w-[1.5rem]">
-                        {index + 1}.
-                      </span>
+                    <div key={index} className="space-y-2">
                       <Textarea
                         placeholder={`Steg ${index + 1}`}
                         value={instruction}
@@ -286,51 +313,105 @@ const NewRecipe = () => {
                         <Button
                           type="button"
                           variant="ghost"
-                          size="icon"
+                          size="sm"
                           onClick={() => removeInstruction(index)}
-                          className="mt-2"
+                          className="h-8 text-muted-foreground"
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-3 w-3 mr-1" />
+                          Fjern
                         </Button>
                       )}
                     </div>
                   ))}
                 </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addInstruction}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Legg til steg
+                </Button>
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label>Tags (f.eks. Kylling, Pasta)</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={addTag}
-                    className="gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Legg til
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  {tags.map((tag, index) => (
-                    <div key={index} className="flex gap-2">
-                      <Input
-                        placeholder={`Tag ${index + 1} (f.eks. Kylling)`}
-                        value={tag}
-                        onChange={(e) => updateTag(index, e.target.value)}
+                <Label>Tags</Label>
+                <Popover open={tagSearchOpen} onOpenChange={setTagSearchOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between h-auto min-h-[2.5rem] py-2"
+                    >
+                      <span className="text-muted-foreground">
+                        Velg eller legg til tag
+                      </span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0" align="start">
+                    <Command>
+                      <CommandInput 
+                        placeholder="Søk eller skriv ny tag..." 
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const value = e.currentTarget.value;
+                            if (value) {
+                              addNewTag(value);
+                              e.currentTarget.value = "";
+                            }
+                          }
+                        }}
                       />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeTag(index)}
+                      <CommandList>
+                        <CommandEmpty className="py-2 px-3 text-sm">
+                          Trykk Enter for å legge til ny tag
+                        </CommandEmpty>
+                        <CommandGroup>
+                          {availableTags.map((tag) => (
+                            <CommandItem
+                              key={tag}
+                              value={tag}
+                              onSelect={() => {
+                                toggleTag(tag);
+                              }}
+                            >
+                              <Check
+                                className={`mr-2 h-4 w-4 ${
+                                  selectedTags.includes(tag) ? "opacity-100" : "opacity-0"
+                                }`}
+                              />
+                              {tag}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                
+                {selectedTags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {selectedTags.map((tag) => (
+                      <Badge
+                        key={tag}
+                        variant="secondary"
+                        className="gap-1"
                       >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => removeTag(tag)}
+                          className="ml-1 hover:text-foreground"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-3 pt-4">
