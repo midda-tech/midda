@@ -268,34 +268,9 @@ const EditRecipe = () => {
         <div className="max-w-3xl mx-auto">
           <Card>
             <CardContent className="p-6 sm:p-8 space-y-8">
-              <div className="flex items-start justify-between">
-                <h2 className="font-serif text-3xl font-bold text-foreground">
-                  {isSystemRecipe ? "Vis oppskrift" : "Rediger oppskrift"}
-                </h2>
-                {!isSystemRecipe && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="icon" disabled={deleting}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Slett oppskrift?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Er du sikker på at du vil slette denne oppskriften? Dette kan ikke angres.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                          Slett
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                )}
-              </div>
+              <h2 className="font-serif text-3xl font-bold text-foreground">
+                {isSystemRecipe ? "Vis oppskrift" : "Rediger oppskrift"}
+              </h2>
 
               {isSystemRecipe && (
                 <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">
@@ -393,27 +368,70 @@ const EditRecipe = () => {
                 )}
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex flex-col gap-3 pt-4">
                 {!isSystemRecipe && (
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={handleSave}
+                      disabled={saving || deleting}
+                      size="lg"
+                      className="flex-1"
+                    >
+                      {saving ? "Lagrer..." : "Lagre endringer"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="lg"
+                      onClick={() => navigate("/oppskrifter")}
+                      disabled={saving || deleting}
+                    >
+                      Avbryt
+                    </Button>
+                  </div>
+                )}
+                
+                {isSystemRecipe && (
                   <Button
-                    onClick={handleSave}
-                    disabled={saving}
+                    type="button"
+                    variant="outline"
                     size="lg"
-                    className="flex-1"
+                    onClick={() => navigate("/oppskrifter")}
+                    className="w-full"
                   >
-                    {saving ? "Lagrer..." : "Lagre endringer"}
+                    Tilbake
                   </Button>
                 )}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="lg"
-                  onClick={() => navigate("/oppskrifter")}
-                  disabled={saving || deleting}
-                  className={isSystemRecipe ? "flex-1" : ""}
-                >
-                  {isSystemRecipe ? "Tilbake" : "Avbryt"}
-                </Button>
+
+                {!isSystemRecipe && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="lg" 
+                        disabled={deleting}
+                        className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Slett oppskrift
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Slett oppskrift?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Er du sikker på at du vil slette denne oppskriften? Dette kan ikke angres.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                          Slett
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
               </div>
             </CardContent>
           </Card>
