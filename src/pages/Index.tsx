@@ -14,7 +14,7 @@ const Index = () => {
           .from("profiles")
           .select("current_household_id")
           .eq("id", session.user.id)
-          .single();
+          .maybeSingle();
 
         if (profile?.current_household_id) {
           navigate("/hjem");
@@ -28,19 +28,21 @@ const Index = () => {
 
     checkSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("current_household_id")
-          .eq("id", session.user.id)
-          .single();
+        setTimeout(async () => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("current_household_id")
+            .eq("id", session.user.id)
+            .maybeSingle();
 
-        if (profile?.current_household_id) {
-          navigate("/hjem");
-        } else {
-          navigate("/velg-husstand");
-        }
+          if (profile?.current_household_id) {
+            navigate("/hjem");
+          } else {
+            navigate("/velg-husstand");
+          }
+        }, 0);
       }
     });
 
