@@ -2,15 +2,16 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-
-
 const Index = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     // Check if user is authenticated
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({
+      data: {
+        session
+      }
+    }) => {
       if (session) {
         // User is logged in, redirect to household selection
         navigate("/velg-husstand");
@@ -20,30 +21,27 @@ const Index = () => {
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: {
+        subscription
+      }
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         navigate("/velg-husstand");
       }
     });
-
     return () => subscription.unsubscribe();
   }, [navigate]);
-
   if (loading) {
     return null;
   }
-
-  return (
-    <div className="min-h-screen bg-background flex flex-col">
+  return <div className="min-h-screen bg-background flex flex-col">
       {/* Navigation */}
       <nav className="w-full px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="font-display text-2xl font-bold text-foreground">Midda</span>
         </div>
-        <Button 
-          onClick={() => navigate("/auth")}
-          className="font-semibold"
-        >
+        <Button onClick={() => navigate("/auth")} className="font-semibold">
           Kom i gang
         </Button>
       </nav>
@@ -51,9 +49,8 @@ const Index = () => {
       {/* Hero Section */}
       <main className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="max-w-4xl mx-auto text-center space-y-8 animate-fade-in">
-          <h1 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-foreground leading-tight tracking-tight">
-            Enkel. Smart.
-            <br />
+          <h1 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-foreground leading-tight tracking-tight">Enkel. Smart.
+Midda.<br />
             Middagsplanlegging.
           </h1>
           
@@ -62,11 +59,7 @@ const Index = () => {
           </p>
 
           <div className="pt-4">
-            <Button 
-              size="lg"
-              onClick={() => navigate("/auth")}
-              className="text-lg px-8 py-6 font-semibold shadow-soft hover:shadow-medium transition-all"
-            >
+            <Button size="lg" onClick={() => navigate("/auth")} className="text-lg px-8 py-6 font-semibold shadow-soft hover:shadow-medium transition-all">
               Start gratis i dag
             </Button>
           </div>
@@ -77,8 +70,6 @@ const Index = () => {
       <footer className="w-full px-6 py-6 text-center text-sm text-muted-foreground">
         <p>Gjør middagsplanleggingen enklere for hele familien</p>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
