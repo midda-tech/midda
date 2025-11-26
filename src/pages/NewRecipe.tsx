@@ -365,7 +365,7 @@ const NewRecipe = () => {
                           }
                         }}
                       />
-                      <CommandList className="max-h-[156px] overflow-y-auto">
+                      <CommandList className="max-h-[120px] overflow-y-auto">
                         <CommandEmpty className="py-2 px-3 text-sm">
                           Trykk Enter for å legge til ny tag
                         </CommandEmpty>
