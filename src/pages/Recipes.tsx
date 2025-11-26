@@ -102,18 +102,22 @@ const Recipes = () => {
     <div className="flex min-h-screen flex-col bg-background">
       <AppHeader />
       
-      <main className="flex-1 p-4 sm:p-6">
-        <div className="max-w-6xl mx-auto space-y-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h2 className="font-serif text-4xl font-bold text-foreground">
+      <main className="flex-1 p-4 sm:p-6 pb-24">
+        <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
+            <div className="flex-1">
+              <h2 className="font-serif text-3xl sm:text-4xl font-bold text-foreground">
                 Oppskrifter
               </h2>
-              <p className="text-muted-foreground mt-1">
+              <p className="text-muted-foreground text-sm mt-1">
                 {filteredRecipes.length} oppskrifter tilgjengelig
               </p>
             </div>
-            <Button size="lg" className="gap-2" onClick={() => navigate("/oppskrifter/ny")}>
+            <Button 
+              size="lg" 
+              className="gap-2 w-full sm:w-auto shrink-0" 
+              onClick={() => navigate("/oppskrifter/ny")}
+            >
               <Plus className="h-4 w-4" />
               Ny oppskrift
             </Button>
@@ -130,17 +134,17 @@ const Recipes = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "all" | "mine")}>
-            <TabsList>
-              <TabsTrigger value="mine">
+            <TabsList className="w-full">
+              <TabsTrigger value="mine" className="flex-1 text-sm">
                 Mine oppskrifter ({householdRecipesCount})
               </TabsTrigger>
-              <TabsTrigger value="all">
+              <TabsTrigger value="all" className="flex-1 text-sm">
                 Alle oppskrifter ({recipes.length})
               </TabsTrigger>
             </TabsList>
           </Tabs>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredRecipes.map((recipe) => (
               <Card key={recipe.id} className="hover:shadow-md transition-shadow cursor-pointer">
                 <CardHeader className="text-center space-y-4 pb-4">
