@@ -230,11 +230,11 @@ export const HouseholdSection = ({
           Husstand
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         {/* Household Switcher */}
         {allHouseholds.length > 1 && (
           <div className="space-y-2">
-            <Label className="text-sm text-muted-foreground">Bytt husstand</Label>
+            <Label className="text-sm font-medium text-muted-foreground">Bytt husstand</Label>
             <Select value={currentHousehold.id} onValueChange={handleHouseholdSwitch}>
               <SelectTrigger>
                 <SelectValue />
@@ -252,7 +252,7 @@ export const HouseholdSection = ({
 
         {/* Edit Household Name */}
         <div className="space-y-2">
-          <Label className="text-sm text-muted-foreground">Husstandsnavn</Label>
+          <Label className="text-sm font-medium text-muted-foreground">Husstandsnavn</Label>
           {isEditingName ? (
             <div className="flex items-center gap-2">
               <Input
@@ -282,7 +282,7 @@ export const HouseholdSection = ({
 
         {/* Invite Code */}
         <div className="space-y-2">
-          <Label className="text-sm text-muted-foreground">Invitasjonskode</Label>
+          <Label className="text-sm font-medium text-muted-foreground">Invitasjonskode</Label>
           <div className="flex items-center gap-2">
             <code className="flex-1 px-3 py-2 bg-muted rounded-md text-foreground font-mono text-lg tracking-wider">
               {currentHousehold.invite_code}
@@ -301,34 +301,36 @@ export const HouseholdSection = ({
         </div>
 
         {/* Household Members */}
-        <div className="space-y-2">
-          <Label className="text-sm text-muted-foreground flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Medlemmer
-          </Label>
+        <div className="space-y-3 rounded-lg bg-muted/30 p-4 border border-border/50">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-medium text-foreground flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Medlemmer
+            </Label>
+            <span className="text-xs text-muted-foreground">
+              {members.length}/8
+            </span>
+          </div>
           {loadingMembers ? (
             <p className="text-sm text-muted-foreground">Laster...</p>
           ) : members.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Ingen medlemmer funnet</p>
+            <p className="text-sm text-muted-foreground italic">Ingen medlemmer lastet ennå</p>
           ) : (
-            <div className="space-y-1">
+            <div className="space-y-2">
               {members.map((member) => (
-                <p
+                <div
                   key={member.user_id}
-                  className="text-foreground text-sm"
+                  className="text-sm text-foreground"
                 >
                   {member.first_name} {member.last_name}
-                </p>
+                </div>
               ))}
             </div>
           )}
-          <p className="text-xs text-muted-foreground">
-            {members.length} av 8 medlemmer
-          </p>
         </div>
 
         {/* Add Household (Join or Create) */}
-        <div className="pt-2">
+        <div>
           <Dialog open={addHouseholdDialogOpen} onOpenChange={setAddHouseholdDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" className="w-full gap-2">
