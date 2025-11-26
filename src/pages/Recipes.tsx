@@ -146,7 +146,11 @@ const Recipes = () => {
 
           <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredRecipes.map((recipe) => (
-              <Card key={recipe.id} className="hover:shadow-md transition-shadow cursor-pointer">
+              <Card 
+                key={recipe.id} 
+                className="hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => navigate(`/oppskrifter/${recipe.id}`)}
+              >
                 <CardHeader className="text-center space-y-4 pb-4">
                   <div className="flex justify-center">
                     <img src={getRecipeIcon(recipe.icon)} alt="" className="h-16 w-16" />

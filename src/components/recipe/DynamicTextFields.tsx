@@ -10,6 +10,7 @@ interface DynamicTextFieldsProps {
   placeholder: (index: number) => string;
   addButtonLabel: string;
   minFields?: number;
+  disabled?: boolean;
 }
 
 export const DynamicTextFields = ({
@@ -20,6 +21,7 @@ export const DynamicTextFields = ({
   placeholder,
   addButtonLabel,
   minFields = 1,
+  disabled = false,
 }: DynamicTextFieldsProps) => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, index: number) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -47,8 +49,9 @@ export const DynamicTextFields = ({
               onKeyDown={(e) => handleKeyDown(e, index)}
               rows={1}
               className="resize-none py-2 text-sm min-h-[2.5rem] pr-8"
+              disabled={disabled}
             />
-            {fields.length > minFields && (
+            {fields.length > minFields && !disabled && (
               <button
                 type="button"
                 onClick={() => onRemove(index)}
@@ -61,15 +64,17 @@ export const DynamicTextFields = ({
           </div>
         ))}
       </div>
-      <Button
-        type="button"
-        variant="outline"
-        onClick={onAdd}
-        className="w-full h-8 border-dashed gap-2 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <Plus className="h-3.5 w-3.5" />
-        {addButtonLabel}
-      </Button>
+      {!disabled && (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onAdd}
+          className="w-full h-8 border-dashed gap-2 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          {addButtonLabel}
+        </Button>
+      )}
     </>
   );
 };
