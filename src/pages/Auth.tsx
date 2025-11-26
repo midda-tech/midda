@@ -85,11 +85,11 @@ const Auth = () => {
             <CardTitle className="text-2xl font-bold tracking-tight">
               {isLogin ? "Logg inn" : "Opprett konto"}
             </CardTitle>
-            <CardDescription className="text-base">
-              {isLogin
-                ? "Bruk din e-post og passord"
-                : "Fyll ut feltene under for å komme i gang"}
-            </CardDescription>
+            {!isLogin && (
+              <CardDescription className="text-base">
+                Fyll ut feltene under for å komme i gang
+              </CardDescription>
+            )}
           </CardHeader>
           <CardContent className="space-y-6">
             <form onSubmit={handleAuth} className="space-y-5">
