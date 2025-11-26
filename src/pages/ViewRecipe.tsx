@@ -1,0 +1,197 @@
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { AppHeader } from "@/components/AppHeader";
+import { getRecipeIcon } from "@/lib/recipeIcons";
+import { Pencil, ArrowLeft, Users } from "lucide-react";
+
+interface RecipeInstruction {
+  step: number;
+  instruction: string;
+}
+
+const ViewRecipe = () => {
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const [loading, setLoading] = useState(true);
+  const [recipe, setRecipe] = useState<any>(null);
+  const [isSystemRecipe, setIsSystemRecipe] = useState(false);
+
+  useEffect(() => {
+    const loadRecipe = async () => {
+      if (!id) {
+        navigate("/oppskrifter");
+        return;
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("current_household_id")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      if (!profile?.current_household_id) {
+        navigate("/velg-husstand");
+        return;
+      }
+
+      // Try household recipes first
+      const { data: householdRecipe } = await supabase
+        .from("household_recipes")
+        .select("*")
+        .eq("id", id)
+        .eq("household_id", profile.current_household_id)
+        .maybeSingle();
+
+      if (householdRecipe) {
+        setIsSystemRecipe(false);
+        setRecipe(householdRecipe);
+        setLoading(false);
+        return;
+      }
+
+      // Check system recipes
+      const { data: systemRecipe } = await supabase
+        .from("system_recipes")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (systemRecipe) {
+        setIsSystemRecipe(true);
+        setRecipe(systemRecipe);
+        setLoading(false);
+        return;
+      }
+
+      toast.error("Oppskrift ikke funnet");
+      navigate("/oppskrifter");
+    };
+
+    loadRecipe();
+  }, [id, navigate]);
+
+  if (loading || !recipe) {
+    return null;
+  }
+
+  const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
+  const instructions = Array.isArray(recipe.instructions) 
+    ? recipe.instructions.sort((a: RecipeInstruction, b: RecipeInstruction) => a.step - b.step)
+    : [];
+  const tags = Array.isArray(recipe.tags) ? recipe.tags : [];
+
+  return (
+    <div className="flex min-h-screen flex-col bg-background">
+      <AppHeader />
+      
+      <main className="flex-1 p-4 sm:p-6 pb-24">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/oppskrifter")}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="flex-1" />
+            {!isSystemRecipe && (
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/oppskrifter/${id}/rediger`)}
+                className="gap-2"
+              >
+                <Pencil className="h-4 w-4" />
+                Rediger
+              </Button>
+            )}
+          </div>
+
+          <Card>
+            <CardContent className="p-6 sm:p-8">
+              <div className="flex flex-col items-center text-center space-y-6 pb-6 border-b">
+                <img 
+                  src={getRecipeIcon(recipe.icon)} 
+                  alt="" 
+                  className="h-24 w-24 sm:h-32 sm:w-32" 
+                />
+                <div className="space-y-3">
+                  <h1 className="font-serif text-3xl sm:text-4xl font-bold text-foreground">
+                    {recipe.title}
+                  </h1>
+                  <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                    <Users className="h-4 w-4" />
+                    <span className="text-lg">{recipe.servings} personer</span>
+                  </div>
+                  {tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 justify-center pt-2">
+                      {tags.map((tag: string, idx: number) => (
+                        <Badge key={idx} variant="secondary">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-8 pt-8">
+                <div className="space-y-4">
+                  <h2 className="font-serif text-2xl font-bold text-foreground">
+                    Ingredienser
+                  </h2>
+                  <ul className="space-y-3">
+                    {ingredients.map((ingredient: string, idx: number) => (
+                      <li 
+                        key={idx}
+                        className="flex items-start gap-3 text-base leading-relaxed"
+                      >
+                        <span className="text-primary font-medium mt-1">•</span>
+                        <span>{ingredient}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="space-y-4">
+                  <h2 className="font-serif text-2xl font-bold text-foreground">
+                    Fremgangsmåte
+                  </h2>
+                  <ol className="space-y-4">
+                    {instructions.map((inst: RecipeInstruction, idx: number) => (
+                      <li 
+                        key={idx}
+                        className="flex gap-4"
+                      >
+                        <span className="flex-shrink-0 flex items-center justify-center h-7 w-7 rounded-full bg-primary text-primary-foreground font-medium text-sm">
+                          {inst.step}
+                        </span>
+                        <p className="text-base leading-relaxed pt-0.5">
+                          {inst.instruction}
+                        </p>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default ViewRecipe;

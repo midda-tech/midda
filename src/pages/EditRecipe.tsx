@@ -219,7 +219,7 @@ const EditRecipe = () => {
       if (error) throw error;
 
       toast.success("Oppskrift oppdatert!");
-      navigate("/oppskrifter");
+      navigate(`/oppskrifter/${id}`);
     } catch (error) {
       if (error instanceof z.ZodError) {
         const firstError = error.errors[0];
@@ -383,7 +383,7 @@ const EditRecipe = () => {
                       type="button"
                       variant="outline"
                       size="lg"
-                      onClick={() => navigate("/oppskrifter")}
+                      onClick={() => navigate(`/oppskrifter/${id}`)}
                       disabled={saving || deleting}
                     >
                       Avbryt
@@ -396,7 +396,7 @@ const EditRecipe = () => {
                     type="button"
                     variant="outline"
                     size="lg"
-                    onClick={() => navigate("/oppskrifter")}
+                    onClick={() => navigate(`/oppskrifter/${id}`)}
                     className="w-full"
                   >
                     Tilbake
