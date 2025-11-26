@@ -16,24 +16,13 @@ const SelectHousehold = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const checkAuthAndHousehold = async () => {
+    const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         navigate("/auth");
-        return;
-      }
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("current_household_id")
-        .eq("id", session.user.id)
-        .single();
-
-      if (profile?.current_household_id) {
-        navigate("/hjem");
       }
     };
-    checkAuthAndHousehold();
+    checkAuth();
   }, [navigate]);
 
   const handleSignOut = async () => {
