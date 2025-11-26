@@ -83,12 +83,12 @@ const Auth = () => {
         <Card className="border-border/50 shadow-medium">
           <CardHeader className="space-y-3 pb-6">
             <CardTitle className="text-2xl font-bold tracking-tight">
-              {isLogin ? "Velkommen tilbake" : "Kom i gang"}
+              {isLogin ? "Logg inn" : "Opprett konto"}
             </CardTitle>
             <CardDescription className="text-base">
               {isLogin
-                ? "Logg inn for å fortsette til dine husstander"
-                : "Opprett en konto for å begynne"}
+                ? "Bruk din e-post og passord"
+                : "Fyll ut feltene under for å komme i gang"}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
