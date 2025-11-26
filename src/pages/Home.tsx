@@ -49,7 +49,7 @@ const Home = () => {
           Midda
         </h1>
         <nav className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" className="gap-2">
+          <Button variant="ghost" size="sm" className="gap-2" onClick={() => navigate("/oppskrifter")}>
             <BookOpen className="h-4 w-4" />
             <span className="hidden sm:inline">Oppskrifter</span>
           </Button>
@@ -89,7 +89,7 @@ const Home = () => {
                 </div>
               </CardHeader>
               <CardContent className="pt-0 pb-6">
-                <Button className="w-full" size="lg">
+                <Button className="w-full" size="lg" onClick={() => navigate("/oppskrifter")}>
                   Se oppskrifter
                 </Button>
               </CardContent>
