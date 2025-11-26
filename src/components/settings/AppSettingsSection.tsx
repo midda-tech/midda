@@ -71,7 +71,7 @@ export const AppSettingsSection = ({
               max="20"
               value={servings}
               onChange={(e) => setServings(e.target.value)}
-              className="max-w-[120px]"
+              className="max-w-[120px] [&::-webkit-inner-spin-button]:opacity-100 [&::-webkit-outer-spin-button]:opacity-100"
             />
             <Button
               onClick={handleSave}
