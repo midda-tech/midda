@@ -125,6 +125,12 @@ const NewRecipe = () => {
 
       setSaving(true);
 
+      // Transform instructions to the expected database format
+      const instructionsForDb = validated.instructions.map((instruction, index) => ({
+        step: index + 1,
+        instruction: instruction
+      }));
+
       const { error } = await supabase
         .from("household_recipes")
         .insert({
@@ -134,7 +140,7 @@ const NewRecipe = () => {
           servings: validated.servings,
           icon: validated.icon,
           ingredients: validated.ingredients,
-          instructions: validated.instructions,
+          instructions: instructionsForDb,
           tags: validated.tags
         });
 
