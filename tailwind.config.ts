@@ -97,10 +97,11 @@ export default {
   				'100%': { opacity: '1', transform: 'scale(1)' }
   			}
   		},
-  		fontFamily: {
-  			sans: ['Plus Jakarta Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-  			serif: ['Lora', 'ui-serif', 'Georgia', 'serif']
-  		},
+		fontFamily: {
+			sans: ['Plus Jakarta Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+			serif: ['Lora', 'ui-serif', 'Georgia', 'serif'],
+			display: ['Lora', 'ui-serif', 'Georgia', 'serif']
+		},
   		boxShadow: {
   			'soft': 'var(--shadow-soft)',
   			'medium': 'var(--shadow-medium)',
