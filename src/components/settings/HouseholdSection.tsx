@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Home, Copy, Check, Edit2, X, Plus } from "lucide-react";
 import { toast } from "sonner";
 
@@ -35,9 +36,10 @@ export const HouseholdSection = ({
   const [codeCopied, setCodeCopied] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState("");
-  const [joinDialogOpen, setJoinDialogOpen] = useState(false);
+  const [addHouseholdDialogOpen, setAddHouseholdDialogOpen] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
-  const [joining, setJoining] = useState(false);
+  const [newHouseholdName, setNewHouseholdName] = useState("");
+  const [processing, setProcessing] = useState(false);
 
   if (!currentHousehold) return null;
 
@@ -107,7 +109,7 @@ export const HouseholdSection = ({
       return;
     }
 
-    setJoining(true);
+    setProcessing(true);
     try {
       const { data, error } = await supabase.rpc("join_household_by_invite", {
         p_invite_code: inviteCode.trim().toUpperCase(),
@@ -127,13 +129,53 @@ export const HouseholdSection = ({
         .eq("id", user.id);
 
       toast.success(`Ble med i ${result.household_name}`);
-      setJoinDialogOpen(false);
+      setAddHouseholdDialogOpen(false);
       setInviteCode("");
       onHouseholdJoined();
     } catch (error: any) {
       toast.error(error.message || "Kunne ikke bli med i husstand");
     } finally {
-      setJoining(false);
+      setProcessing(false);
+    }
+  };
+
+  const handleCreateHousehold = async () => {
+    if (!newHouseholdName.trim()) {
+      toast.error("Vennligst skriv inn et navn på husstanden");
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Ikke autentisert");
+
+      // Create the household
+      const { data: householdData, error: householdError } = await supabase
+        .from("households")
+        .insert({
+          household_name: newHouseholdName.trim(),
+          created_by: user.id,
+        })
+        .select()
+        .single();
+
+      if (householdError) throw householdError;
+
+      // Switch to the new household
+      await supabase
+        .from("profiles")
+        .update({ current_household_id: householdData.id })
+        .eq("id", user.id);
+
+      toast.success(`Opprettet ${householdData.household_name}`);
+      setAddHouseholdDialogOpen(false);
+      setNewHouseholdName("");
+      onHouseholdJoined();
+    } catch (error: any) {
+      toast.error(error.message || "Kunne ikke opprette husstand");
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -215,47 +257,90 @@ export const HouseholdSection = ({
           </p>
         </div>
 
-        {/* Join Another Household */}
+        {/* Add Household (Join or Create) */}
         <div className="pt-2">
-          <Dialog open={joinDialogOpen} onOpenChange={setJoinDialogOpen}>
+          <Dialog open={addHouseholdDialogOpen} onOpenChange={setAddHouseholdDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" className="w-full gap-2">
                 <Plus className="h-4 w-4" />
-                Bli med i annen husstand
+                Legg til husstand
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Bli med i husstand</DialogTitle>
+                <DialogTitle>Legg til husstand</DialogTitle>
                 <DialogDescription>
-                  Skriv inn invitasjonskoden du har fått for å bli med i en husstand
+                  Bli med i en eksisterende husstand eller opprett en ny
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-2">
-                <Label htmlFor="invite-code">Invitasjonskode</Label>
-                <Input
-                  id="invite-code"
-                  value={inviteCode}
-                  onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                  placeholder="ABC123"
-                  maxLength={6}
-                  className="font-mono tracking-wider"
-                />
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setJoinDialogOpen(false);
-                    setInviteCode("");
-                  }}
-                >
-                  Avbryt
-                </Button>
-                <Button onClick={handleJoinHousehold} disabled={joining}>
-                  {joining ? "Blir med..." : "Bli med"}
-                </Button>
-              </DialogFooter>
+              
+              <Tabs defaultValue="join" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="join">Bli med</TabsTrigger>
+                  <TabsTrigger value="create">Opprett ny</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="join" className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="invite-code">Invitasjonskode</Label>
+                    <Input
+                      id="invite-code"
+                      value={inviteCode}
+                      onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                      placeholder="ABC123"
+                      maxLength={6}
+                      className="font-mono tracking-wider"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Skriv inn invitasjonskoden du har fått
+                    </p>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setAddHouseholdDialogOpen(false);
+                        setInviteCode("");
+                      }}
+                    >
+                      Avbryt
+                    </Button>
+                    <Button onClick={handleJoinHousehold} disabled={processing}>
+                      {processing ? "Blir med..." : "Bli med"}
+                    </Button>
+                  </DialogFooter>
+                </TabsContent>
+                
+                <TabsContent value="create" className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="household-name">Husstandsnavn</Label>
+                    <Input
+                      id="household-name"
+                      value={newHouseholdName}
+                      onChange={(e) => setNewHouseholdName(e.target.value)}
+                      placeholder="Familie Hansen"
+                      maxLength={100}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Velg et navn på den nye husstanden
+                    </p>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setAddHouseholdDialogOpen(false);
+                        setNewHouseholdName("");
+                      }}
+                    >
+                      Avbryt
+                    </Button>
+                    <Button onClick={handleCreateHousehold} disabled={processing}>
+                      {processing ? "Oppretter..." : "Opprett"}
+                    </Button>
+                  </DialogFooter>
+                </TabsContent>
+              </Tabs>
             </DialogContent>
           </Dialog>
         </div>
