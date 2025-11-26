@@ -20,7 +20,7 @@ const Auth = () => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate("/velg-husstand");
+        navigate("/");
       }
     };
     checkUser();
@@ -40,7 +40,7 @@ const Auth = () => {
         if (error) throw error;
         
         toast.success("Logget inn!");
-        navigate("/velg-husstand");
+        navigate("/");
       } else {
         const { error } = await supabase.auth.signUp({
           email,
@@ -50,7 +50,7 @@ const Auth = () => {
               first_name: firstName,
               last_name: lastName,
             },
-            emailRedirectTo: `${window.location.origin}/velg-husstand`,
+            emailRedirectTo: `${window.location.origin}/`,
           },
         });
 
