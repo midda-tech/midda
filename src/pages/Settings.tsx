@@ -14,7 +14,6 @@ interface Profile {
   first_name: string;
   last_name: string;
   email: string;
-  default_servings: number | null;
 }
 
 interface Household {
@@ -22,6 +21,7 @@ interface Household {
   household_name: string;
   invite_code: string;
   created_by: string;
+  default_servings: number | null;
 }
 
 const Settings = () => {
@@ -46,7 +46,7 @@ const Settings = () => {
 
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("first_name, last_name, email, default_servings, current_household_id")
+        .select("first_name, last_name, email, current_household_id")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -55,14 +55,12 @@ const Settings = () => {
           first_name: profileData.first_name,
           last_name: profileData.last_name,
           email: profileData.email,
-          default_servings: profileData.default_servings,
         });
-        setDefaultServings(profileData.default_servings?.toString() || "4");
 
         if (profileData.current_household_id) {
           const { data: householdData } = await supabase
             .from("households")
-            .select("id, household_name, invite_code, created_by")
+            .select("id, household_name, invite_code, created_by, default_servings")
             .eq("id", profileData.current_household_id)
             .maybeSingle();
 
@@ -70,6 +68,7 @@ const Settings = () => {
             setHousehold(householdData);
             setEditedHouseholdName(householdData.household_name);
             setIsAdmin(householdData.created_by === user.id);
+            setDefaultServings(householdData.default_servings?.toString() || "4");
           }
         }
       }
@@ -91,6 +90,11 @@ const Settings = () => {
   };
 
   const handleSaveServings = async () => {
+    if (!household) {
+      toast.error("Ingen husstand valgt");
+      return;
+    }
+
     const servings = parseInt(defaultServings);
     if (isNaN(servings) || servings < 1 || servings > 20) {
       toast.error("Vennligst skriv inn et tall mellom 1 og 20");
@@ -99,18 +103,15 @@ const Settings = () => {
 
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Ikke autentisert");
-
       const { error } = await supabase
-        .from("profiles")
+        .from("households")
         .update({ default_servings: servings })
-        .eq("id", user.id);
+        .eq("id", household.id);
 
       if (error) throw error;
 
       toast.success("Standard porsjoner oppdatert");
-      setProfile(prev => prev ? { ...prev, default_servings: servings } : null);
+      setHousehold(prev => prev ? { ...prev, default_servings: servings } : null);
     } catch (error: any) {
       toast.error(error.message || "Kunne ikke oppdatere innstillinger");
     } finally {
@@ -313,7 +314,7 @@ const Settings = () => {
                 />
                 <Button
                   onClick={handleSaveServings}
-                  disabled={saving || defaultServings === profile?.default_servings?.toString()}
+                  disabled={saving || defaultServings === household?.default_servings?.toString()}
                 >
                   {saving ? "Lagrer..." : "Lagre"}
                 </Button>
