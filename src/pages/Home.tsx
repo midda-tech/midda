@@ -2,8 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Settings } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { BookOpen, ShoppingCart, Settings } from "lucide-react";
 import { toast } from "sonner";
+import bookIcon from "@/assets/book-icon.png";
+import cartIcon from "@/assets/shopping-cart-icon.png";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -45,23 +48,78 @@ const Home = () => {
         <h1 className="font-serif text-2xl font-bold tracking-tight text-foreground">
           Midda
         </h1>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate("/innstillinger")}
-        >
-          <Settings className="h-5 w-5" />
-        </Button>
+        <nav className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" className="gap-2">
+            <BookOpen className="h-4 w-4" />
+            <span className="hidden sm:inline">Oppskrifter</span>
+          </Button>
+          <Button variant="ghost" size="sm" className="gap-2">
+            <ShoppingCart className="h-4 w-4" />
+            <span className="hidden sm:inline">Handlelister</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/innstillinger")}
+          >
+            <Settings className="h-5 w-5" />
+          </Button>
+        </nav>
       </header>
       
-      <main className="flex flex-1 items-center justify-center p-4">
-        <div className="text-center">
-          <h2 className="font-display text-3xl font-bold text-foreground">
-            Velkommen til Midda
-          </h2>
-          <p className="mt-4 text-muted-foreground">
-            Din husstand er klar!
-          </p>
+      <main className="flex-1 p-4 sm:p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Card className="flex flex-col">
+              <CardHeader className="flex-1 text-center space-y-4">
+                <div className="flex justify-center">
+                  <img src={bookIcon} alt="" className="h-24 w-24" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl font-serif text-primary">
+                    Oppskrifter
+                  </CardTitle>
+                  <CardDescription className="mt-2 text-base">
+                    Utforsk og administrer dine oppskrifter
+                  </CardDescription>
+                </div>
+                <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                  <BookOpen className="h-4 w-4" />
+                  <span>10 oppskrifter</span>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <Button className="w-full" size="lg">
+                  Se oppskrifter
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="flex flex-col">
+              <CardHeader className="flex-1 text-center space-y-4">
+                <div className="flex justify-center">
+                  <img src={cartIcon} alt="" className="h-24 w-24" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl font-serif text-primary">
+                    Handlelister
+                  </CardTitle>
+                  <CardDescription className="mt-2 text-base">
+                    Opprett og administrer handlelister fra oppskrifter
+                  </CardDescription>
+                </div>
+                <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                  <ShoppingCart className="h-4 w-4" />
+                  <span>0 lister</span>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <Button className="w-full" size="lg">
+                  Se handlelister
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </main>
     </div>
