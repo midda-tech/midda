@@ -152,12 +152,11 @@ const ShoppingLists = () => {
               {showGeneratingPlaceholder && (
                 <Card className="bg-gradient-to-br from-primary/5 via-background to-primary/10 border-primary/20 animate-pulse">
                   <CardContent className="p-6 space-y-4">
+                    <h3 className="font-serif text-xl font-bold">{generatingTitle}</h3>
                     <div className="flex items-center gap-2">
                       <Sparkles className="h-5 w-5 text-primary animate-pulse" />
                       <span className="text-sm font-medium text-primary">Genererer...</span>
                     </div>
-                    <h3 className="font-serif text-xl font-bold">{generatingTitle}</h3>
-                    <p className="text-sm text-muted-foreground">AI lager handlelisten din</p>
                   </CardContent>
                 </Card>
               )}
