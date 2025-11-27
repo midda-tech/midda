@@ -3,18 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Plus, Sparkles, Trash2 } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/AppHeader";
 import { format } from "date-fns";
@@ -98,24 +87,6 @@ const ShoppingLists = () => {
     };
   }, [householdId, showGeneratingPlaceholder, generatingStartTime]);
 
-  const handleDelete = async (e: React.MouseEvent, listId: string) => {
-    e.stopPropagation();
-    try {
-      const { error } = await supabase
-        .from("shopping_lists")
-        .delete()
-        .eq("id", listId);
-
-      if (error) throw error;
-
-      toast.success("Handleliste slettet");
-      setShoppingLists(prev => prev.filter(list => list.id !== listId));
-    } catch (error) {
-      console.error("Error deleting shopping list:", error);
-      toast.error("Kunne ikke slette handleliste");
-    }
-  };
-
   const fetchShoppingLists = async (householdId: string) => {
     try {
       const { data, error } = await supabase
@@ -193,37 +164,11 @@ const ShoppingLists = () => {
               {shoppingLists.map((list) => (
                 <Card 
                   key={list.id} 
-                  className="hover:shadow-md transition-all cursor-pointer relative"
+                  className="hover:shadow-md transition-all cursor-pointer"
                   onClick={() => navigate(`/handlelister/${list.id}`)}
                 >
                   <CardContent className="p-6 space-y-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-serif text-xl font-bold flex-1">{list.title}</h3>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            className="h-8 w-8 shrink-0 -mt-1"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Slett handleliste?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Er du sikker på at du vil slette denne handlelisten? Dette kan ikke angres.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                            <AlertDialogAction onClick={(e) => handleDelete(e, list.id)}>Slett</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
+                    <h3 className="font-serif text-xl font-bold">{list.title}</h3>
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>{format(new Date(list.created_at), "d. MMMM yyyy", { locale: nb })}</span>
                       <span>{list.shopping_list?.categories.length || 0} kategorier</span>
