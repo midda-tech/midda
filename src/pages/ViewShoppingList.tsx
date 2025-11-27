@@ -4,7 +4,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
@@ -80,6 +91,23 @@ const ViewShoppingList = () => {
     });
   };
 
+  const handleDelete = async () => {
+    try {
+      const { error } = await supabase
+        .from("shopping_lists")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast.success("Handleliste slettet");
+      navigate("/handlelister");
+    } catch (error) {
+      console.error("Error deleting shopping list:", error);
+      toast.error("Kunne ikke slette handleliste");
+    }
+  };
+
   const categories = shoppingList?.shopping_list?.categories || [];
 
   if (loading) {
@@ -107,6 +135,25 @@ const ViewShoppingList = () => {
               {format(new Date(shoppingList.created_at), "d. MMMM yyyy", { locale: nb })}
             </p>
           </div>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Trash2 className="h-5 w-5" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Slett handleliste?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Er du sikker på at du vil slette denne handlelisten? Dette kan ikke angres.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete}>Slett</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </header>
 
