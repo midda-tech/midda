@@ -224,65 +224,71 @@ const NewShoppingList = () => {
               return (
                 <Card 
                   key={recipe.id}
-                  className={`transition-all ${selected ? 'border-primary ring-1 ring-primary' : ''}`}
+                  className={`transition-all cursor-pointer hover:shadow-md ${
+                    selected ? 'border-primary ring-2 ring-primary' : ''
+                  }`}
+                  onClick={() => toggleRecipe(recipe)}
                 >
                   <CardContent className="p-4">
-                    <div className="flex items-start gap-4">
-                      <button
-                        onClick={() => toggleRecipe(recipe)}
-                        className={`shrink-0 rounded-md p-2 transition-colors ${
-                          selected 
-                            ? 'bg-primary text-primary-foreground' 
-                            : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                        }`}
-                      >
+                    <div className="flex items-center gap-4">
+                      <div className={`shrink-0 rounded-lg p-3 transition-colors ${
+                        selected 
+                          ? 'bg-primary' 
+                          : 'bg-secondary'
+                      }`}>
                         {selected ? (
-                          <Check className="h-5 w-5" />
+                          <Check className="h-6 w-6 text-primary-foreground" />
                         ) : (
-                          <img src={getRecipeIcon(recipe.icon)} alt="" className="h-5 w-5" />
+                          <img src={getRecipeIcon(recipe.icon)} alt="" className="h-6 w-6" />
                         )}
-                      </button>
+                      </div>
 
                       <div className="flex-1 min-w-0">
                         <h3 className="font-medium text-foreground mb-1">
                           {recipe.title}
                         </h3>
                         {recipe.tags && Array.isArray(recipe.tags) && recipe.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mb-2">
-                            {recipe.tags.slice(0, 2).map((tag: string, idx: number) => (
+                          <div className="flex flex-wrap gap-1">
+                            {recipe.tags.slice(0, 3).map((tag: string, idx: number) => (
                               <Badge key={idx} variant="secondary" className="text-xs">
                                 {tag}
                               </Badge>
                             ))}
                           </div>
                         )}
-                        
-                        {selected && servings && (
-                          <div className="flex items-center gap-2 mt-2">
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => updateServings(recipe.id, -1)}
-                              disabled={servings <= 1}
-                            >
-                              <Minus className="h-3 w-3" />
-                            </Button>
-                            <span className="text-sm font-medium w-20 text-center">
-                              {servings} personer
-                            </span>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => updateServings(recipe.id, 1)}
-                            >
-                              <Plus className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        )}
                       </div>
                     </div>
+                    
+                    {selected && servings && (
+                      <div className="flex items-center gap-2 mt-4 pt-4 border-t">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            updateServings(recipe.id, -1);
+                          }}
+                          disabled={servings <= 1}
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <span className="text-sm font-medium flex-1 text-center">
+                          {servings} personer
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            updateServings(recipe.id, 1);
+                          }}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               );
