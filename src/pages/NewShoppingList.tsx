@@ -41,6 +41,7 @@ const NewShoppingList = () => {
   const [generating, setGenerating] = useState(false);
 
   const todayFormatted = format(new Date(), "EEEE d. MMMM", { locale: nb });
+  const capitalizedDate = todayFormatted.charAt(0).toUpperCase() + todayFormatted.slice(1);
 
   useEffect(() => {
     const checkAuthAndFetchRecipes = async () => {
@@ -199,10 +200,10 @@ const NewShoppingList = () => {
             />
             <button
               type="button"
-              onClick={() => setListTitle(todayFormatted)}
+              onClick={() => setListTitle(capitalizedDate)}
               className="text-sm text-primary underline hover:text-primary/80 transition-colors"
             >
-              {todayFormatted}
+              {capitalizedDate}
             </button>
           </div>
 
