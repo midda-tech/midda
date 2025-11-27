@@ -92,7 +92,7 @@ const Home = () => {
                 </div>
               </CardHeader>
               <CardContent className="pt-0 pb-6">
-                <Button className="w-full" size="lg">
+                <Button className="w-full" size="lg" onClick={() => navigate("/handlelister")}>
                   <ShoppingCart className="h-4 w-4" />
                   Se handlelister
                 </Button>

@@ -1,0 +1,323 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Search, Minus, Plus, Check } from "lucide-react";
+import { toast } from "sonner";
+import { Json } from "@/integrations/supabase/types";
+import { getRecipeIcon } from "@/lib/recipeIcons";
+import { format } from "date-fns";
+import { nb } from "date-fns/locale";
+
+interface Recipe {
+  id: string;
+  title: string;
+  servings: number;
+  ingredients: Json;
+  tags: Json;
+  icon: number | null;
+  isSystem: boolean;
+}
+
+interface SelectedRecipe {
+  id: string;
+  title: string;
+  servings: number;
+  table: "system_recipes" | "household_recipes";
+}
+
+const NewShoppingList = () => {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [listTitle, setListTitle] = useState("");
+  const [selectedRecipes, setSelectedRecipes] = useState<SelectedRecipe[]>([]);
+  const [householdId, setHouseholdId] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+
+  const todayFormatted = format(new Date(), "EEEE d. MMMM", { locale: nb });
+
+  useEffect(() => {
+    const checkAuthAndFetchRecipes = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("current_household_id")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      if (!profile?.current_household_id) {
+        navigate("/velg-husstand");
+        return;
+      }
+
+      setHouseholdId(profile.current_household_id);
+      await fetchRecipes(profile.current_household_id);
+      setLoading(false);
+    };
+
+    checkAuthAndFetchRecipes();
+  }, [navigate]);
+
+  const fetchRecipes = async (householdId: string) => {
+    try {
+      const { data: systemRecipes, error: systemError } = await supabase
+        .from("system_recipes")
+        .select("*");
+
+      if (systemError) throw systemError;
+
+      const { data: householdRecipes, error: householdError } = await supabase
+        .from("household_recipes")
+        .select("*")
+        .eq("household_id", householdId);
+
+      if (householdError) throw householdError;
+
+      const allRecipes: Recipe[] = [
+        ...(systemRecipes || []).map(r => ({ ...r, isSystem: true })),
+        ...(householdRecipes || []).map(r => ({ ...r, isSystem: false })),
+      ];
+
+      setRecipes(allRecipes);
+    } catch (error) {
+      console.error("Error fetching recipes:", error);
+      toast.error("Kunne ikke laste oppskrifter");
+    }
+  };
+
+  const filteredRecipes = recipes.filter(recipe =>
+    recipe.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const isRecipeSelected = (recipeId: string) => {
+    return selectedRecipes.some(r => r.id === recipeId);
+  };
+
+  const getSelectedRecipeServings = (recipeId: string) => {
+    return selectedRecipes.find(r => r.id === recipeId)?.servings;
+  };
+
+  const toggleRecipe = (recipe: Recipe) => {
+    if (isRecipeSelected(recipe.id)) {
+      setSelectedRecipes(prev => prev.filter(r => r.id !== recipe.id));
+    } else {
+      setSelectedRecipes(prev => [...prev, {
+        id: recipe.id,
+        title: recipe.title,
+        servings: recipe.servings,
+        table: recipe.isSystem ? "system_recipes" : "household_recipes"
+      }]);
+    }
+  };
+
+  const updateServings = (recipeId: string, delta: number) => {
+    setSelectedRecipes(prev => prev.map(r => {
+      if (r.id === recipeId) {
+        const newServings = Math.max(1, r.servings + delta);
+        return { ...r, servings: newServings };
+      }
+      return r;
+    }));
+  };
+
+  const handleGenerate = async () => {
+    if (!listTitle.trim()) {
+      toast.error("Vennligst gi handlelisten en tittel");
+      return;
+    }
+
+    if (selectedRecipes.length === 0) {
+      toast.error("Vennligst velg minst én oppskrift");
+      return;
+    }
+
+    setGenerating(true);
+
+    try {
+      const { error } = await supabase.functions.invoke("generate-shopping-list", {
+        body: {
+          recipe_selections: selectedRecipes.map(r => ({
+            id: r.id,
+            table: r.table,
+            servings: r.servings
+          })),
+          shoppingListTitle: listTitle.trim()
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success("Handleliste genereres!");
+      navigate("/handlelister");
+    } catch (error) {
+      console.error("Error generating shopping list:", error);
+      toast.error("Kunne ikke generere handleliste");
+      setGenerating(false);
+    }
+  };
+
+  if (loading) {
+    return null;
+  }
+
+  return (
+    <div className="flex min-h-screen flex-col bg-background">
+      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex h-16 items-center px-4 gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/handlelister")}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="font-serif text-xl font-bold">Ny handleliste</h1>
+        </div>
+      </header>
+
+      <main className="flex-1 p-4 pb-32">
+        <div className="max-w-2xl mx-auto space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="title">Tittel</Label>
+            <Input
+              id="title"
+              placeholder="F.eks. Ukehandel"
+              value={listTitle}
+              onChange={(e) => setListTitle(e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={() => setListTitle(todayFormatted)}
+              className="text-sm text-primary underline hover:text-primary/80 transition-colors"
+            >
+              {todayFormatted}
+            </button>
+          </div>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Søk etter oppskrifter..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          <div className="space-y-3">
+            {filteredRecipes.map((recipe) => {
+              const selected = isRecipeSelected(recipe.id);
+              const servings = getSelectedRecipeServings(recipe.id);
+
+              return (
+                <Card 
+                  key={recipe.id}
+                  className={`transition-all ${selected ? 'border-primary ring-1 ring-primary' : ''}`}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-4">
+                      <button
+                        onClick={() => toggleRecipe(recipe)}
+                        className={`shrink-0 rounded-md p-2 transition-colors ${
+                          selected 
+                            ? 'bg-primary text-primary-foreground' 
+                            : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                        }`}
+                      >
+                        {selected ? (
+                          <Check className="h-5 w-5" />
+                        ) : (
+                          <img src={getRecipeIcon(recipe.icon)} alt="" className="h-5 w-5" />
+                        )}
+                      </button>
+
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-foreground mb-1">
+                          {recipe.title}
+                        </h3>
+                        {recipe.tags && Array.isArray(recipe.tags) && recipe.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {recipe.tags.slice(0, 2).map((tag: string, idx: number) => (
+                              <Badge key={idx} variant="secondary" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {selected && servings && (
+                          <div className="flex items-center gap-2 mt-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => updateServings(recipe.id, -1)}
+                              disabled={servings <= 1}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <span className="text-sm font-medium w-20 text-center">
+                              {servings} personer
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => updateServings(recipe.id, 1)}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {filteredRecipes.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">
+                Ingen oppskrifter funnet
+              </p>
+            </div>
+          )}
+        </div>
+      </main>
+
+      {selectedRecipes.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4">
+          <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
+            <div className="text-sm">
+              <span className="font-medium">{selectedRecipes.length}</span>
+              <span className="text-muted-foreground"> oppskrifter valgt</span>
+            </div>
+            <Button 
+              size="lg" 
+              onClick={handleGenerate}
+              disabled={generating || !listTitle.trim()}
+            >
+              {generating ? "Genererer..." : "Generer handleliste"}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default NewShoppingList;
