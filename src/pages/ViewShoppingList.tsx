@@ -4,23 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { Json } from "@/integrations/supabase/types";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
-
-interface Category {
-  name: string;
-  items: string[];
-}
-
-interface ShoppingList {
-  id: string;
-  title: string;
-  shopping_list: Json;
-  created_at: string;
-}
+import { ShoppingList } from "@/types/shopping-list";
 
 const ViewShoppingList = () => {
   const navigate = useNavigate();
@@ -72,7 +60,7 @@ const ViewShoppingList = () => {
         return;
       }
 
-      setShoppingList(data);
+      setShoppingList(data as unknown as ShoppingList);
     } catch (error) {
       console.error("Error fetching shopping list:", error);
       toast.error("Kunne ikke laste handleliste");
@@ -92,12 +80,7 @@ const ViewShoppingList = () => {
     });
   };
 
-  const categories = shoppingList?.shopping_list && 
-    typeof shoppingList.shopping_list === 'object' && 
-    'categories' in shoppingList.shopping_list &&
-    Array.isArray((shoppingList.shopping_list as any).categories)
-    ? (shoppingList.shopping_list as any).categories as Category[]
-    : [];
+  const categories = shoppingList?.shopping_list?.categories || [];
 
   if (loading) {
     return null;

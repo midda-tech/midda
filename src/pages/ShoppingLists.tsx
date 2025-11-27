@@ -6,17 +6,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/AppHeader";
-import { Json } from "@/integrations/supabase/types";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import cartIcon from "@/assets/shopping-cart-icon.png";
-
-interface ShoppingList {
-  id: string;
-  title: string;
-  shopping_list: Json;
-  created_at: string;
-}
+import { ShoppingList } from "@/types/shopping-list";
 
 const ShoppingLists = () => {
   const navigate = useNavigate();
@@ -69,57 +62,24 @@ const ShoppingLists = () => {
   useEffect(() => {
     if (!householdId) return;
 
+    const handleChange = async () => {
+      if (showGeneratingPlaceholder && generatingStartTime) {
+        const elapsed = Date.now() - generatingStartTime;
+        const delay = Math.max(0, 2000 - elapsed);
+        if (delay > 0) await new Promise(resolve => setTimeout(resolve, delay));
+        setShowGeneratingPlaceholder(false);
+      }
+      fetchShoppingLists(householdId);
+    };
+
     const channel = supabase
       .channel('shopping-lists-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'shopping_lists',
-          filter: `household_id=eq.${householdId}`
-        },
-        async () => {
-          // When a new list is inserted, enforce minimum 2-second display time
-          if (showGeneratingPlaceholder && generatingStartTime) {
-            const elapsed = Date.now() - generatingStartTime;
-            const remainingTime = Math.max(0, 2000 - elapsed);
-            
-            if (remainingTime > 0) {
-              await new Promise(resolve => setTimeout(resolve, remainingTime));
-            }
-            
-            setShowGeneratingPlaceholder(false);
-            setGeneratingStartTime(null);
-          }
-          
-          fetchShoppingLists(householdId);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'shopping_lists',
-          filter: `household_id=eq.${householdId}`
-        },
-        () => {
-          fetchShoppingLists(householdId);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'shopping_lists',
-          filter: `household_id=eq.${householdId}`
-        },
-        () => {
-          fetchShoppingLists(householdId);
-        }
-      )
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'shopping_lists',
+        filter: `household_id=eq.${householdId}`
+      }, handleChange)
       .subscribe();
 
     return () => {
@@ -136,18 +96,14 @@ const ShoppingLists = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setShoppingLists(data || []);
+      setShoppingLists((data || []) as unknown as ShoppingList[]);
     } catch (error) {
       console.error("Error fetching shopping lists:", error);
       toast.error("Kunne ikke laste handlelister");
     }
   };
 
-  const isGenerating = (list: ShoppingList) => {
-    return !list.shopping_list || 
-           (typeof list.shopping_list === 'object' && 
-            !('categories' in list.shopping_list));
-  };
+  const isGenerating = (list: ShoppingList) => !list.shopping_list;
 
   if (loading) {
     return null;
@@ -194,72 +150,29 @@ const ShoppingLists = () => {
           ) : (
             <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {showGeneratingPlaceholder && (
-                <Card 
-                  className="bg-gradient-to-br from-primary/5 via-background to-primary/10 border-primary/20 animate-pulse cursor-default"
-                >
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="h-5 w-5 text-primary animate-pulse" />
-                        <span className="text-sm font-medium text-primary">
-                          Genererer...
-                        </span>
-                      </div>
-                      <h3 className="font-serif text-xl font-bold text-foreground">
-                        {generatingTitle}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        AI lager handlelisten din
-                      </p>
+                <Card className="bg-gradient-to-br from-primary/5 via-background to-primary/10 border-primary/20 animate-pulse">
+                  <CardContent className="p-6 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-5 w-5 text-primary animate-pulse" />
+                      <span className="text-sm font-medium text-primary">Genererer...</span>
                     </div>
+                    <h3 className="font-serif text-xl font-bold">{generatingTitle}</h3>
+                    <p className="text-sm text-muted-foreground">AI lager handlelisten din</p>
                   </CardContent>
                 </Card>
               )}
               {shoppingLists.map((list) => (
                 <Card 
                   key={list.id} 
-                  className={`hover:shadow-md transition-all cursor-pointer ${
-                    isGenerating(list) 
-                      ? 'bg-gradient-to-br from-primary/5 via-background to-primary/10 border-primary/20 animate-pulse' 
-                      : ''
-                  }`}
-                  onClick={() => !isGenerating(list) && navigate(`/handlelister/${list.id}`)}
+                  className="hover:shadow-md transition-all cursor-pointer"
+                  onClick={() => navigate(`/handlelister/${list.id}`)}
                 >
-                  <CardContent className="p-6">
-                    {isGenerating(list) ? (
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-2">
-                          <Sparkles className="h-5 w-5 text-primary animate-pulse" />
-                          <span className="text-sm font-medium text-primary">
-                            Genererer...
-                          </span>
-                        </div>
-                        <h3 className="font-serif text-xl font-bold text-foreground">
-                          {list.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          AI lager handlelisten din
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <h3 className="font-serif text-xl font-bold text-foreground">
-                          {list.title}
-                        </h3>
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>
-                            {format(new Date(list.created_at), "d. MMMM yyyy", { locale: nb })}
-                          </span>
-                          <span>
-                            {typeof list.shopping_list === 'object' && 
-                             'categories' in list.shopping_list &&
-                             Array.isArray((list.shopping_list as any).categories)
-                              ? `${(list.shopping_list as any).categories.length} kategorier`
-                              : '0 kategorier'}
-                          </span>
-                        </div>
-                      </div>
-                    )}
+                  <CardContent className="p-6 space-y-4">
+                    <h3 className="font-serif text-xl font-bold">{list.title}</h3>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{format(new Date(list.created_at), "d. MMMM yyyy", { locale: nb })}</span>
+                      <span>{list.shopping_list?.categories.length || 0} kategorier</span>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
