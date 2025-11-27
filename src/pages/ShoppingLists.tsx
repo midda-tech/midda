@@ -3,12 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, ShoppingCart, Sparkles } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/AppHeader";
 import { Json } from "@/integrations/supabase/types";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
+import cartIcon from "@/assets/shopping-cart-icon.png";
 
 interface ShoppingList {
   id: string;
@@ -124,8 +125,8 @@ const ShoppingLists = () => {
           {shoppingLists.length === 0 ? (
             <Card className="border-2">
               <CardContent className="flex flex-col items-center justify-center py-16 px-4 text-center">
-                <div className="mb-6 rounded-full bg-secondary/50 p-6">
-                  <ShoppingCart className="h-16 w-16 text-muted-foreground" />
+                <div className="mb-6">
+                  <img src={cartIcon} alt="" className="h-24 w-24 opacity-50" />
                 </div>
                 <h3 className="font-serif text-2xl font-bold text-foreground mb-2">
                   Ingen handlelister ennå
