@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Trash2, Pencil, X, Plus } from "lucide-react";
+import { ArrowLeft, Trash2, Pencil, X, Plus, Check } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
@@ -287,21 +287,42 @@ const ViewShoppingList = () => {
                         />
                         
                         {isEditing ? (
-                          <Input
-                            value={editValue}
-                            onChange={(e) => setEditValue(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                saveEdit();
-                              } else if (e.key === 'Escape') {
+                          <>
+                            <Input
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  saveEdit();
+                                } else if (e.key === 'Escape') {
+                                  setEditingItem(null);
+                                  setEditValue("");
+                                }
+                              }}
+                              autoFocus
+                              className="flex-1 h-9"
+                            />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 shrink-0 text-primary hover:text-primary hover:bg-primary/10"
+                              onClick={saveEdit}
+                              disabled={!editValue.trim()}
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 shrink-0"
+                              onClick={() => {
                                 setEditingItem(null);
                                 setEditValue("");
-                              }
-                            }}
-                            onBlur={saveEdit}
-                            autoFocus
-                            className="flex-1 h-9"
-                          />
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </>
                         ) : (
                           <>
                             <label
