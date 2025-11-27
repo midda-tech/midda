@@ -15,11 +15,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, Trash2, Pencil, X, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
-import { ShoppingList } from "@/types/shopping-list";
+import { ShoppingList, ShoppingListCategory } from "@/types/shopping-list";
+import { Input } from "@/components/ui/input";
 
 const ViewShoppingList = () => {
   const navigate = useNavigate();
@@ -27,6 +28,10 @@ const ViewShoppingList = () => {
   const [loading, setLoading] = useState(true);
   const [shoppingList, setShoppingList] = useState<ShoppingList | null>(null);
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+  const [editingItem, setEditingItem] = useState<{ categoryIdx: number; itemIdx: number } | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [addingToCategory, setAddingToCategory] = useState<number | null>(null);
+  const [newItemValue, setNewItemValue] = useState("");
 
   useEffect(() => {
     const checkAuthAndFetchList = async () => {
@@ -89,6 +94,99 @@ const ViewShoppingList = () => {
       }
       return newSet;
     });
+  };
+
+  const updateShoppingListInDB = async (updatedCategories: ShoppingListCategory[]) => {
+    try {
+      const { error } = await supabase
+        .from("shopping_lists")
+        .update({
+          shopping_list: { categories: updatedCategories } as any
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error updating shopping list:", error);
+      toast.error("Kunne ikke oppdatere handleliste");
+    }
+  };
+
+  const startEditing = (categoryIdx: number, itemIdx: number, currentValue: string) => {
+    setEditingItem({ categoryIdx, itemIdx });
+    setEditValue(currentValue);
+  };
+
+  const saveEdit = async () => {
+    if (!shoppingList || !editingItem || !editValue.trim()) {
+      setEditingItem(null);
+      return;
+    }
+
+    const updatedCategories = [...categories];
+    updatedCategories[editingItem.categoryIdx].items[editingItem.itemIdx] = editValue.trim();
+
+    setShoppingList({
+      ...shoppingList,
+      shopping_list: { categories: updatedCategories }
+    });
+
+    await updateShoppingListInDB(updatedCategories);
+    setEditingItem(null);
+    setEditValue("");
+  };
+
+  const deleteItem = async (categoryIdx: number, itemIdx: number) => {
+    if (!shoppingList) return;
+
+    const updatedCategories = [...categories];
+    const deletedItem = updatedCategories[categoryIdx].items[itemIdx];
+    updatedCategories[categoryIdx].items.splice(itemIdx, 1);
+
+    // Remove category if it's empty
+    if (updatedCategories[categoryIdx].items.length === 0) {
+      updatedCategories.splice(categoryIdx, 1);
+    }
+
+    // Remove from checked items if it was checked
+    setCheckedItems(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(deletedItem);
+      return newSet;
+    });
+
+    setShoppingList({
+      ...shoppingList,
+      shopping_list: { categories: updatedCategories }
+    });
+
+    await updateShoppingListInDB(updatedCategories);
+    toast.success("Vare fjernet");
+  };
+
+  const startAddingItem = (categoryIdx: number) => {
+    setAddingToCategory(categoryIdx);
+    setNewItemValue("");
+  };
+
+  const addNewItem = async (categoryIdx: number) => {
+    if (!shoppingList || !newItemValue.trim()) {
+      setAddingToCategory(null);
+      return;
+    }
+
+    const updatedCategories = [...categories];
+    updatedCategories[categoryIdx].items.push(newItemValue.trim());
+
+    setShoppingList({
+      ...shoppingList,
+      shopping_list: { categories: updatedCategories }
+    });
+
+    await updateShoppingListInDB(updatedCategories);
+    setAddingToCategory(null);
+    setNewItemValue("");
+    toast.success("Vare lagt til");
   };
 
   const handleDelete = async () => {
@@ -176,25 +274,117 @@ const ViewShoppingList = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {category.items.map((item, itemIdx) => (
-                    <div key={itemIdx} className="flex items-center gap-3">
-                      <Checkbox
-                        id={`${idx}-${itemIdx}`}
-                        checked={checkedItems.has(item)}
-                        onCheckedChange={() => toggleItem(item)}
+                  {category.items.map((item, itemIdx) => {
+                    const isEditing = editingItem?.categoryIdx === idx && editingItem?.itemIdx === itemIdx;
+                    
+                    return (
+                      <div key={itemIdx} className="flex items-center gap-2">
+                        <Checkbox
+                          id={`${idx}-${itemIdx}`}
+                          checked={checkedItems.has(item)}
+                          onCheckedChange={() => toggleItem(item)}
+                          disabled={isEditing}
+                        />
+                        
+                        {isEditing ? (
+                          <Input
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                saveEdit();
+                              } else if (e.key === 'Escape') {
+                                setEditingItem(null);
+                                setEditValue("");
+                              }
+                            }}
+                            onBlur={saveEdit}
+                            autoFocus
+                            className="flex-1 h-9"
+                          />
+                        ) : (
+                          <>
+                            <label
+                              htmlFor={`${idx}-${itemIdx}`}
+                              className={`flex-1 text-sm cursor-pointer ${
+                                checkedItems.has(item)
+                                  ? 'line-through text-muted-foreground'
+                                  : 'text-foreground'
+                              }`}
+                            >
+                              {item}
+                            </label>
+                            
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 shrink-0"
+                              onClick={() => startEditing(idx, itemIdx, item)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => deleteItem(idx, itemIdx)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                  
+                  {addingToCategory === idx ? (
+                    <div className="flex items-center gap-2 pt-2 border-t">
+                      <Input
+                        value={newItemValue}
+                        onChange={(e) => setNewItemValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            addNewItem(idx);
+                          } else if (e.key === 'Escape') {
+                            setAddingToCategory(null);
+                            setNewItemValue("");
+                          }
+                        }}
+                        placeholder="F.eks. 500 g mel"
+                        autoFocus
+                        className="flex-1"
                       />
-                      <label
-                        htmlFor={`${idx}-${itemIdx}`}
-                        className={`flex-1 text-sm cursor-pointer ${
-                          checkedItems.has(item)
-                            ? 'line-through text-muted-foreground'
-                            : 'text-foreground'
-                        }`}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => addNewItem(idx)}
+                        disabled={!newItemValue.trim()}
                       >
-                        {item}
-                      </label>
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setAddingToCategory(null);
+                          setNewItemValue("");
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
-                  ))}
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full mt-2"
+                      onClick={() => startAddingItem(idx)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Legg til vare
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             ))
