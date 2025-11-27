@@ -38,7 +38,6 @@ const NewShoppingList = () => {
   const [listTitle, setListTitle] = useState("");
   const [selectedRecipes, setSelectedRecipes] = useState<SelectedRecipe[]>([]);
   const [householdId, setHouseholdId] = useState<string | null>(null);
-  const [generating, setGenerating] = useState(false);
 
   const todayFormatted = format(new Date(), "EEEE d. MMMM", { locale: nb });
   const capitalizedDate = todayFormatted.charAt(0).toUpperCase() + todayFormatted.slice(1);
@@ -144,10 +143,9 @@ const NewShoppingList = () => {
       return;
     }
 
-    setGenerating(true);
-
     try {
-      const { error } = await supabase.functions.invoke("generate-shopping-list", {
+      // Start the generation process
+      supabase.functions.invoke("generate-shopping-list", {
         body: {
           recipe_selections: selectedRecipes.map(r => ({
             id: r.id,
@@ -156,16 +154,19 @@ const NewShoppingList = () => {
           })),
           shoppingListTitle: listTitle.trim()
         }
+      }).then(({ error }) => {
+        if (error) {
+          console.error("Error generating shopping list:", error);
+          toast.error("Kunne ikke generere handleliste");
+        }
       });
 
-      if (error) throw error;
-
+      // Navigate immediately so user sees the loading state
       toast.success("Handleliste genereres!");
       navigate("/handlelister");
     } catch (error) {
       console.error("Error generating shopping list:", error);
       toast.error("Kunne ikke generere handleliste");
-      setGenerating(false);
     }
   };
 
@@ -316,9 +317,9 @@ const NewShoppingList = () => {
             <Button 
               size="lg" 
               onClick={handleGenerate}
-              disabled={generating || !listTitle.trim()}
+              disabled={!listTitle.trim()}
             >
-              {generating ? "Genererer..." : "Generer handleliste"}
+              Generer handleliste
             </Button>
           </div>
         </div>
