@@ -129,7 +129,7 @@ const ShoppingLists = () => {
             </Button>
           </div>
 
-          {shoppingLists.length === 0 ? (
+          {shoppingLists.length === 0 && !showGeneratingPlaceholder ? (
             <Card className="border-2">
               <CardContent className="flex flex-col items-center justify-center py-16 px-4 text-center">
                 <div className="mb-6">
