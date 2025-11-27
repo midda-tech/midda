@@ -27,7 +27,7 @@ interface SelectedRecipe {
   id: string;
   title: string;
   servings: number;
-  table: "default_recipes" | "user_recipes";
+  table: "system_recipes" | "household_recipes";
 }
 
 const NewShoppingList = () => {
@@ -118,7 +118,7 @@ const NewShoppingList = () => {
         id: recipe.id,
         title: recipe.title,
         servings: recipe.servings,
-        table: recipe.isSystem ? "default_recipes" : "user_recipes"
+        table: recipe.isSystem ? "system_recipes" : "household_recipes"
       }]);
     }
   };
