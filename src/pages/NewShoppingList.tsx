@@ -144,7 +144,7 @@ const NewShoppingList = () => {
     }
 
     try {
-      // Start the generation process
+      // Start the generation process (don't await)
       supabase.functions.invoke("generate-shopping-list", {
         body: {
           recipe_selections: selectedRecipes.map(r => ({
@@ -161,9 +161,9 @@ const NewShoppingList = () => {
         }
       });
 
-      // Navigate immediately so user sees the loading state
+      // Navigate immediately with generating state
       toast.success("Handleliste genereres!");
-      navigate("/handlelister");
+      navigate("/handlelister", { state: { generating: true, title: listTitle.trim() } });
     } catch (error) {
       console.error("Error generating shopping list:", error);
       toast.error("Kunne ikke generere handleliste");

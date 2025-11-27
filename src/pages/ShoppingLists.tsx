@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,9 +20,13 @@ interface ShoppingList {
 
 const ShoppingLists = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [shoppingLists, setShoppingLists] = useState<ShoppingList[]>([]);
   const [householdId, setHouseholdId] = useState<string | null>(null);
+  const [showGeneratingPlaceholder, setShowGeneratingPlaceholder] = useState(false);
+  const [generatingTitle, setGeneratingTitle] = useState("");
+  const [generatingStartTime, setGeneratingStartTime] = useState<number | null>(null);
 
   useEffect(() => {
     const checkAuthAndFetchLists = async () => {
@@ -47,10 +51,20 @@ const ShoppingLists = () => {
       setHouseholdId(profile.current_household_id);
       await fetchShoppingLists(profile.current_household_id);
       setLoading(false);
+
+      // Check if we're coming from the new shopping list page
+      if (location.state?.generating) {
+        setShowGeneratingPlaceholder(true);
+        setGeneratingTitle(location.state?.title || "Handleliste");
+        setGeneratingStartTime(Date.now());
+        
+        // Clear the navigation state
+        window.history.replaceState({}, document.title);
+      }
     };
 
     checkAuthAndFetchLists();
-  }, [navigate]);
+  }, [navigate, location]);
 
   useEffect(() => {
     if (!householdId) return;
@@ -60,7 +74,44 @@ const ShoppingLists = () => {
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
+          schema: 'public',
+          table: 'shopping_lists',
+          filter: `household_id=eq.${householdId}`
+        },
+        async () => {
+          // When a new list is inserted, enforce minimum 2-second display time
+          if (showGeneratingPlaceholder && generatingStartTime) {
+            const elapsed = Date.now() - generatingStartTime;
+            const remainingTime = Math.max(0, 2000 - elapsed);
+            
+            if (remainingTime > 0) {
+              await new Promise(resolve => setTimeout(resolve, remainingTime));
+            }
+            
+            setShowGeneratingPlaceholder(false);
+            setGeneratingStartTime(null);
+          }
+          
+          fetchShoppingLists(householdId);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'shopping_lists',
+          filter: `household_id=eq.${householdId}`
+        },
+        () => {
+          fetchShoppingLists(householdId);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
           schema: 'public',
           table: 'shopping_lists',
           filter: `household_id=eq.${householdId}`
@@ -74,7 +125,7 @@ const ShoppingLists = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [householdId]);
+  }, [householdId, showGeneratingPlaceholder, generatingStartTime]);
 
   const fetchShoppingLists = async (householdId: string) => {
     try {
@@ -142,6 +193,28 @@ const ShoppingLists = () => {
             </Card>
           ) : (
             <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {showGeneratingPlaceholder && (
+                <Card 
+                  className="bg-gradient-to-br from-primary/5 via-background to-primary/10 border-primary/20 animate-pulse cursor-default"
+                >
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-5 w-5 text-primary animate-pulse" />
+                        <span className="text-sm font-medium text-primary">
+                          Genererer...
+                        </span>
+                      </div>
+                      <h3 className="font-serif text-xl font-bold text-foreground">
+                        {generatingTitle}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        AI lager handlelisten din
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
               {shoppingLists.map((list) => (
                 <Card 
                   key={list.id} 
