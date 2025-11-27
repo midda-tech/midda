@@ -13,6 +13,7 @@ import ViewRecipe from "./pages/ViewRecipe";
 import EditRecipe from "./pages/EditRecipe";
 import ShoppingLists from "./pages/ShoppingLists";
 import NewShoppingList from "./pages/NewShoppingList";
+import ViewShoppingList from "./pages/ViewShoppingList";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/oppskrifter/:id/rediger" element={<EditRecipe />} />
           <Route path="/handlelister" element={<ShoppingLists />} />
           <Route path="/handlelister/ny" element={<NewShoppingList />} />
+          <Route path="/handlelister/:id" element={<ViewShoppingList />} />
           <Route path="/innstillinger" element={<Settings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
