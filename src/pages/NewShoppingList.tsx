@@ -12,6 +12,14 @@ import { Json } from "@/integrations/supabase/types";
 import { getRecipeIcon } from "@/lib/recipeIcons";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Recipe {
   id: string;
@@ -38,6 +46,7 @@ const NewShoppingList = () => {
   const [listTitle, setListTitle] = useState("");
   const [selectedRecipes, setSelectedRecipes] = useState<SelectedRecipe[]>([]);
   const [householdId, setHouseholdId] = useState<string | null>(null);
+  const [showTitleDialog, setShowTitleDialog] = useState(false);
 
   const todayFormatted = format(new Date(), "EEEE d. MMMM", { locale: nb });
   const capitalizedDate = todayFormatted.charAt(0).toUpperCase() + todayFormatted.slice(1);
@@ -132,16 +141,21 @@ const NewShoppingList = () => {
     }));
   };
 
+  const handleGenerateClick = () => {
+    if (selectedRecipes.length === 0) {
+      toast.error("Vennligst velg minst én oppskrift");
+      return;
+    }
+    setShowTitleDialog(true);
+  };
+
   const handleGenerate = async () => {
     if (!listTitle.trim()) {
       toast.error("Vennligst gi handlelisten en tittel");
       return;
     }
 
-    if (selectedRecipes.length === 0) {
-      toast.error("Vennligst velg minst én oppskrift");
-      return;
-    }
+    setShowTitleDialog(false);
 
     try {
       // Start the generation process (don't await)
@@ -191,23 +205,6 @@ const NewShoppingList = () => {
 
       <main className="flex-1 p-4 pb-32">
         <div className="max-w-2xl mx-auto space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="title">Tittel</Label>
-            <Input
-              id="title"
-              placeholder="F.eks. Ukehandel"
-              value={listTitle}
-              onChange={(e) => setListTitle(e.target.value)}
-            />
-            <button
-              type="button"
-              onClick={() => setListTitle(capitalizedDate)}
-              className="text-sm text-primary underline hover:text-primary/80 transition-colors"
-            >
-              {capitalizedDate}
-            </button>
-          </div>
-
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -308,22 +305,68 @@ const NewShoppingList = () => {
       </main>
 
       {selectedRecipes.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4">
+        <div className="fixed bottom-0 left-0 right-0 border-t-2 bg-primary shadow-lg p-6">
           <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
-            <div className="text-sm">
-              <span className="font-medium">{selectedRecipes.length}</span>
-              <span className="text-muted-foreground"> oppskrifter valgt</span>
+            <div>
+              <div className="text-primary-foreground text-lg font-bold">
+                {selectedRecipes.length} {selectedRecipes.length === 1 ? 'oppskrift' : 'oppskrifter'}
+              </div>
+              <div className="text-primary-foreground/80 text-sm">
+                Klar til å generere
+              </div>
             </div>
             <Button 
-              size="lg" 
-              onClick={handleGenerate}
-              disabled={!listTitle.trim()}
+              size="lg"
+              variant="secondary"
+              className="font-bold"
+              onClick={handleGenerateClick}
             >
               Generer handleliste
             </Button>
           </div>
         </div>
       )}
+
+      <Dialog open={showTitleDialog} onOpenChange={setShowTitleDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Gi handlelisten en tittel</DialogTitle>
+            <DialogDescription>
+              Velg et navn som gjør det enkelt å finne igjen listen senere.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-4">
+            <Label htmlFor="dialog-title">Tittel</Label>
+            <Input
+              id="dialog-title"
+              placeholder="F.eks. Ukehandel"
+              value={listTitle}
+              onChange={(e) => setListTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && listTitle.trim()) {
+                  handleGenerate();
+                }
+              }}
+              autoFocus
+            />
+            <button
+              type="button"
+              onClick={() => setListTitle(capitalizedDate)}
+              className="text-sm text-primary underline hover:text-primary/80 transition-colors"
+            >
+              {capitalizedDate}
+            </button>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTitleDialog(false)}>
+              Avbryt
+            </Button>
+            <Button onClick={handleGenerate} disabled={!listTitle.trim()}>
+              Generer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
