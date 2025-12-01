@@ -14,6 +14,7 @@ export const useHouseholdMembers = (householdId: string | undefined) => {
 
     const fetchMembers = async () => {
       try {
+        // Get member user IDs for this household
         const { data: memberData, error: membersError } = await supabase
           .from("household_members")
           .select("user_id, joined_at")
@@ -28,9 +29,10 @@ export const useHouseholdMembers = (householdId: string | undefined) => {
           return;
         }
 
+        // Use the secure view that doesn't expose email
         const userIds = memberData.map(m => m.user_id);
         const { data: profileData, error: profilesError } = await supabase
-          .from("profiles")
+          .from("household_member_profiles")
           .select("id, first_name, last_name")
           .in("id", userIds);
 
