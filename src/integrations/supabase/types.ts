@@ -101,6 +101,7 @@ export type Database = {
           household_name: string
           id: string
           invite_code: string | null
+          shopping_list_categories: string[] | null
           updated_at: string
         }
         Insert: {
@@ -110,6 +111,7 @@ export type Database = {
           household_name: string
           id?: string
           invite_code?: string | null
+          shopping_list_categories?: string[] | null
           updated_at?: string
         }
         Update: {
@@ -119,6 +121,7 @@ export type Database = {
           household_name?: string
           id?: string
           invite_code?: string | null
+          shopping_list_categories?: string[] | null
           updated_at?: string
         }
         Relationships: []
