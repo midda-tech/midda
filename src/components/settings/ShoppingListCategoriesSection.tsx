@@ -87,8 +87,6 @@ export const ShoppingListCategoriesSection = ({
 }: ShoppingListCategoriesSectionProps) => {
   const [localCategories, setLocalCategories] = useState<string[]>(categories);
   const [newCategory, setNewCategory] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -103,13 +101,21 @@ export const ShoppingListCategoriesSection = ({
 
   useEffect(() => {
     setLocalCategories(categories);
-    setHasChanges(false);
   }, [categories]);
 
-  useEffect(() => {
-    const changed = JSON.stringify(localCategories) !== JSON.stringify(categories);
-    setHasChanges(changed);
-  }, [localCategories, categories]);
+  const saveCategories = async (newCategories: string[]) => {
+    try {
+      const { error } = await supabase
+        .from("households")
+        .update({ shopping_list_categories: newCategories })
+        .eq("id", householdId);
+
+      if (error) throw error;
+      onCategoriesChange(newCategories);
+    } catch (error: any) {
+      toast.error(error.message || "Kunne ikke lagre kategorier");
+    }
+  };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -119,6 +125,7 @@ export const ShoppingListCategoriesSection = ({
       const newIndex = localCategories.indexOf(over.id as string);
       const newOrder = arrayMove(localCategories, oldIndex, newIndex);
       setLocalCategories(newOrder);
+      saveCategories(newOrder);
     }
   };
 
@@ -132,32 +139,16 @@ export const ShoppingListCategoriesSection = ({
       toast.error("Denne kategorien finnes allerede");
       return;
     }
-    setLocalCategories([...localCategories, trimmed]);
+    const newCategories = [...localCategories, trimmed];
+    setLocalCategories(newCategories);
     setNewCategory("");
+    saveCategories(newCategories);
   };
 
   const handleRemoveCategory = (index: number) => {
     const newCategories = localCategories.filter((_, i) => i !== index);
     setLocalCategories(newCategories);
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from("households")
-        .update({ shopping_list_categories: localCategories })
-        .eq("id", householdId);
-
-      if (error) throw error;
-
-      toast.success("Kategorier lagret");
-      onCategoriesChange(localCategories);
-    } catch (error: any) {
-      toast.error(error.message || "Kunne ikke lagre kategorier");
-    } finally {
-      setSaving(false);
-    }
+    saveCategories(newCategories);
   };
 
   return (
@@ -220,12 +211,6 @@ export const ShoppingListCategoriesSection = ({
             </Button>
           </div>
         </div>
-
-        {hasChanges && (
-          <Button onClick={handleSave} disabled={saving} className="w-full">
-            {saving ? "Lagrer..." : "Lagre endringer"}
-          </Button>
-        )}
       </CardContent>
     </Card>
   );
