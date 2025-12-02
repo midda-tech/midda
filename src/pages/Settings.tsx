@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ProfileSection } from "@/components/settings/ProfileSection";
 import { HouseholdSection } from "@/components/settings/HouseholdSection";
 import { AppSettingsSection } from "@/components/settings/AppSettingsSection";
+import { ShoppingListCategoriesSection } from "@/components/settings/ShoppingListCategoriesSection";
 import { AccountSection } from "@/components/settings/AccountSection";
 import { Household } from "@/types/household";
 
@@ -52,7 +53,7 @@ const Settings = () => {
         
         const { data: householdsData } = await supabase
           .from("households")
-          .select("id, household_name, invite_code, created_by, default_servings")
+          .select("id, household_name, invite_code, created_by, default_servings, shopping_list_categories")
           .in("id", householdIds);
 
         if (householdsData) {
@@ -91,6 +92,16 @@ const Settings = () => {
   const handleDefaultServingsChange = (servings: number) => {
     if (currentHousehold) {
       const updated = { ...currentHousehold, default_servings: servings };
+      setCurrentHousehold(updated);
+      setAllHouseholds((prev) =>
+        prev.map((h) => (h.id === updated.id ? updated : h))
+      );
+    }
+  };
+
+  const handleCategoriesChange = (categories: string[]) => {
+    if (currentHousehold) {
+      const updated = { ...currentHousehold, shopping_list_categories: categories };
       setCurrentHousehold(updated);
       setAllHouseholds((prev) =>
         prev.map((h) => (h.id === updated.id ? updated : h))
@@ -138,11 +149,18 @@ const Settings = () => {
         />
 
         {currentHousehold && (
-          <AppSettingsSection
-            householdId={currentHousehold.id}
-            defaultServings={currentHousehold.default_servings?.toString() || "4"}
-            onDefaultServingsChange={handleDefaultServingsChange}
-          />
+          <>
+            <AppSettingsSection
+              householdId={currentHousehold.id}
+              defaultServings={currentHousehold.default_servings?.toString() || "4"}
+              onDefaultServingsChange={handleDefaultServingsChange}
+            />
+            <ShoppingListCategoriesSection
+              householdId={currentHousehold.id}
+              categories={currentHousehold.shopping_list_categories || []}
+              onCategoriesChange={handleCategoriesChange}
+            />
+          </>
         )}
 
         <AccountSection />

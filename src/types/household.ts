@@ -4,6 +4,7 @@ export interface Household {
   invite_code: string;
   created_by: string;
   default_servings: number | null;
+  shopping_list_categories: string[] | null;
 }
 
 export interface HouseholdMember {

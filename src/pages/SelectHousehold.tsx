@@ -58,9 +58,15 @@ const SelectHousehold = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Ikke autentisert");
 
+      const defaultCategories = ["Frukt og grønt", "Meieri", "Hermetikk", "Annet"];
+      
       const { data: household, error: householdError } = await supabase
         .from("households")
-        .insert({ household_name: householdName, created_by: user.id })
+        .insert({ 
+          household_name: householdName, 
+          created_by: user.id,
+          shopping_list_categories: defaultCategories,
+        })
         .select()
         .single();
 
