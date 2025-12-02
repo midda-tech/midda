@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Json } from "@/integrations/supabase/types";
 import { getRecipeIcon } from "@/lib/recipeIcons";
 import { AppHeader } from "@/components/AppHeader";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 interface Recipe {
   id: string;
@@ -25,68 +26,39 @@ interface Recipe {
 
 const Recipes = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const { loading: authLoading, householdId } = useRequireAuth();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"all" | "mine">("all");
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuthAndFetchRecipes = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        navigate("/auth");
-        return;
-      }
+    if (authLoading || !householdId) return;
+    
+    fetchRecipes(householdId);
+  }, [authLoading, householdId]);
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("current_household_id")
-        .eq("id", session.user.id)
-        .maybeSingle();
-
-      if (!profile?.current_household_id) {
-        navigate("/velg-husstand");
-        return;
-      }
-
-      await fetchRecipes(profile.current_household_id);
-      setLoading(false);
-    };
-
-    checkAuthAndFetchRecipes();
-  }, [navigate]);
-
-  const fetchRecipes = async (householdId: string) => {
+  const fetchRecipes = async (hId: string) => {
     try {
-      // Fetch system recipes
-      const { data: systemRecipes, error: systemError } = await supabase
-        .from("system_recipes")
-        .select("*");
+      const [{ data: systemRecipes, error: systemError }, { data: householdRecipes, error: householdError }] = await Promise.all([
+        supabase.from("system_recipes").select("*"),
+        supabase.from("household_recipes").select("*").eq("household_id", hId)
+      ]);
 
       if (systemError) throw systemError;
-
-      // Fetch household recipes
-      const { data: householdRecipes, error: householdError } = await supabase
-        .from("household_recipes")
-        .select("*")
-        .eq("household_id", householdId);
-
       if (householdError) throw householdError;
 
-      const allRecipes: Recipe[] = [
+      setRecipes([
         ...(systemRecipes || []).map(r => ({ ...r, isSystem: true })),
         ...(householdRecipes || []).map(r => ({ ...r, isSystem: false })),
-      ];
-
-      setRecipes(allRecipes);
+      ]);
       
-      // Set default tab based on household recipe count
-      const householdCount = householdRecipes?.length || 0;
-      setActiveTab(householdCount > 0 ? "mine" : "all");
+      setActiveTab((householdRecipes?.length || 0) > 0 ? "mine" : "all");
     } catch (error) {
       console.error("Error fetching recipes:", error);
       toast.error("Kunne ikke laste oppskrifter");
+    } finally {
+      setDataLoading(false);
     }
   };
 
@@ -98,7 +70,7 @@ const Recipes = () => {
 
   const householdRecipesCount = recipes.filter(r => !r.isSystem).length;
 
-  if (loading) {
+  if (authLoading || dataLoading) {
     return null;
   }
 

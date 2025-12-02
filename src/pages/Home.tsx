@@ -5,61 +5,36 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 import bookIcon from "@/assets/book-icon.png";
 import cartIcon from "@/assets/shopping-cart-icon.png";
 
 const Home = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const { loading: authLoading, householdId } = useRequireAuth();
   const [recipeCount, setRecipeCount] = useState(0);
   const [shoppingListCount, setShoppingListCount] = useState(0);
-  const [householdId, setHouseholdId] = useState<string | null>(null);
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuthAndHousehold = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        navigate("/auth");
-        return;
-      }
+    if (authLoading || !householdId) return;
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("current_household_id")
-        .eq("id", session.user.id)
-        .maybeSingle();
-
-      if (!profile?.current_household_id) {
-        navigate("/velg-husstand");
-        return;
-      }
-
-      setHouseholdId(profile.current_household_id);
-      
-      // Fetch recipe count (system + household recipes)
-      const [systemRecipesResult, householdRecipesResult] = await Promise.all([
+    const fetchCounts = async () => {
+      const [systemRecipesResult, householdRecipesResult, listCountResult] = await Promise.all([
         supabase.from("system_recipes").select("id", { count: "exact", head: true }),
-        supabase.from("household_recipes").select("id", { count: "exact", head: true }).eq("household_id", profile.current_household_id)
+        supabase.from("household_recipes").select("id", { count: "exact", head: true }).eq("household_id", householdId),
+        supabase.from("shopping_lists").select("id", { count: "exact", head: true }).eq("household_id", householdId)
       ]);
       
-      const totalRecipes = (systemRecipesResult.count || 0) + (householdRecipesResult.count || 0);
-      setRecipeCount(totalRecipes);
-      
-      // Fetch shopping list count
-      const { count: listCount } = await supabase
-        .from("shopping_lists")
-        .select("id", { count: "exact", head: true })
-        .eq("household_id", profile.current_household_id);
-      
-      setShoppingListCount(listCount || 0);
-      setLoading(false);
+      setRecipeCount((systemRecipesResult.count || 0) + (householdRecipesResult.count || 0));
+      setShoppingListCount(listCountResult.count || 0);
+      setDataLoading(false);
     };
 
-    checkAuthAndHousehold();
-  }, [navigate]);
+    fetchCounts();
+  }, [authLoading, householdId]);
 
-  if (loading) {
+  if (authLoading || dataLoading) {
     return null;
   }
 
@@ -116,10 +91,7 @@ const Home = () => {
                 <Button 
                   className="w-full" 
                   size="lg" 
-                  onClick={() => {
-                    console.log("Shopping list button clicked");
-                    navigate("/handlelister");
-                  }}
+                  onClick={() => navigate("/handlelister")}
                 >
                   <ShoppingCart className="h-4 w-4" />
                   Se handlelister
