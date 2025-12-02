@@ -10,54 +10,30 @@ import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import cartIcon from "@/assets/shopping-cart-icon.png";
 import { ShoppingList } from "@/types/shopping-list";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 const ShoppingLists = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [loading, setLoading] = useState(true);
+  const { loading: authLoading, householdId } = useRequireAuth();
   const [shoppingLists, setShoppingLists] = useState<ShoppingList[]>([]);
-  const [householdId, setHouseholdId] = useState<string | null>(null);
   const [showGeneratingPlaceholder, setShowGeneratingPlaceholder] = useState(false);
   const [generatingTitle, setGeneratingTitle] = useState("");
   const [generatingStartTime, setGeneratingStartTime] = useState<number | null>(null);
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuthAndFetchLists = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        navigate("/auth");
-        return;
-      }
+    if (authLoading || !householdId) return;
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("current_household_id")
-        .eq("id", session.user.id)
-        .maybeSingle();
+    fetchShoppingLists(householdId).then(() => setDataLoading(false));
 
-      if (!profile?.current_household_id) {
-        navigate("/velg-husstand");
-        return;
-      }
-
-      setHouseholdId(profile.current_household_id);
-      await fetchShoppingLists(profile.current_household_id);
-      setLoading(false);
-
-      // Check if we're coming from the new shopping list page
-      if (location.state?.generating) {
-        setShowGeneratingPlaceholder(true);
-        setGeneratingTitle(location.state?.title || "Handleliste");
-        setGeneratingStartTime(Date.now());
-        
-        // Clear the navigation state
-        window.history.replaceState({}, document.title);
-      }
-    };
-
-    checkAuthAndFetchLists();
-  }, [navigate, location]);
+    if (location.state?.generating) {
+      setShowGeneratingPlaceholder(true);
+      setGeneratingTitle(location.state?.title || "Handleliste");
+      setGeneratingStartTime(Date.now());
+      window.history.replaceState({}, document.title);
+    }
+  }, [authLoading, householdId, location]);
 
   useEffect(() => {
     if (!householdId) return;
@@ -105,7 +81,7 @@ const ShoppingLists = () => {
 
   const isGenerating = (list: ShoppingList) => !list.shopping_list;
 
-  if (loading) {
+  if (authLoading || dataLoading) {
     return null;
   }
 

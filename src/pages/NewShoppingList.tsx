@@ -12,6 +12,7 @@ import { Json } from "@/integrations/supabase/types";
 import { getRecipeIcon } from "@/lib/recipeIcons";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 import {
   Dialog,
   DialogContent,
@@ -40,69 +41,42 @@ interface SelectedRecipe {
 
 const NewShoppingList = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const { loading: authLoading, householdId } = useRequireAuth();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [listTitle, setListTitle] = useState("");
   const [selectedRecipes, setSelectedRecipes] = useState<SelectedRecipe[]>([]);
-  const [householdId, setHouseholdId] = useState<string | null>(null);
   const [showTitleDialog, setShowTitleDialog] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
 
   const todayFormatted = format(new Date(), "EEEE d. MMMM", { locale: nb });
   const capitalizedDate = todayFormatted.charAt(0).toUpperCase() + todayFormatted.slice(1);
 
   useEffect(() => {
-    const checkAuthAndFetchRecipes = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        navigate("/auth");
-        return;
-      }
+    if (authLoading || !householdId) return;
+    
+    fetchRecipes(householdId);
+  }, [authLoading, householdId]);
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("current_household_id")
-        .eq("id", session.user.id)
-        .maybeSingle();
-
-      if (!profile?.current_household_id) {
-        navigate("/velg-husstand");
-        return;
-      }
-
-      setHouseholdId(profile.current_household_id);
-      await fetchRecipes(profile.current_household_id);
-      setLoading(false);
-    };
-
-    checkAuthAndFetchRecipes();
-  }, [navigate]);
-
-  const fetchRecipes = async (householdId: string) => {
+  const fetchRecipes = async (hId: string) => {
     try {
-      const { data: systemRecipes, error: systemError } = await supabase
-        .from("system_recipes")
-        .select("*");
+      const [{ data: systemRecipes, error: systemError }, { data: householdRecipes, error: householdError }] = await Promise.all([
+        supabase.from("system_recipes").select("*"),
+        supabase.from("household_recipes").select("*").eq("household_id", hId)
+      ]);
 
       if (systemError) throw systemError;
-
-      const { data: householdRecipes, error: householdError } = await supabase
-        .from("household_recipes")
-        .select("*")
-        .eq("household_id", householdId);
-
       if (householdError) throw householdError;
 
-      const allRecipes: Recipe[] = [
+      setRecipes([
         ...(systemRecipes || []).map(r => ({ ...r, isSystem: true })),
         ...(householdRecipes || []).map(r => ({ ...r, isSystem: false })),
-      ];
-
-      setRecipes(allRecipes);
+      ]);
     } catch (error) {
       console.error("Error fetching recipes:", error);
       toast.error("Kunne ikke laste oppskrifter");
+    } finally {
+      setDataLoading(false);
     }
   };
 
@@ -184,7 +158,7 @@ const NewShoppingList = () => {
     }
   };
 
-  if (loading) {
+  if (authLoading || dataLoading) {
     return null;
   }
 
