@@ -131,7 +131,7 @@ const ShoppingLists = () => {
                     <h3 className="font-serif text-xl font-bold">{generatingTitle}</h3>
                     <div className="flex items-center gap-2">
                       <Sparkles className="h-5 w-5 text-primary animate-pulse" />
-                      <span className="text-sm font-medium text-primary">Genererer...</span>
+                      <span className="text-sm font-medium text-primary">Skriver handleliste...</span>
                     </div>
                   </CardContent>
                 </Card>
