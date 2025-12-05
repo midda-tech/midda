@@ -58,16 +58,6 @@ const Index = () => {
           <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Planlegg ukens middager, lag handlelistene dine automatisk, og spar tid hver eneste dag.
           </p>
-
-          <div className="pt-4">
-            <Button 
-              size="lg" 
-              onClick={handleMainAction} 
-              className="text-lg px-8 py-6 font-semibold shadow-soft hover:shadow-medium transition-all"
-            >
-              {isAuthenticated ? "Åpne appen" : "Kom i gang"}
-            </Button>
-          </div>
         </div>
       </main>
 
