@@ -14,7 +14,7 @@ export const AccountSection = () => {
       toast.error("Kunne ikke logge ut");
     } else {
       toast.success("Logget ut");
-      navigate("/auth");
+      navigate("/logg-inn");
     }
   };
 

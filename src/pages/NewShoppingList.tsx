@@ -151,7 +151,7 @@ const NewShoppingList = () => {
 
       // Navigate immediately with generating state
       toast.success("Handleliste genereres!");
-      navigate("/handlelister", { state: { generating: true, title: listTitle.trim() } });
+      navigate("/app/handlelister", { state: { generating: true, title: listTitle.trim() } });
     } catch (error) {
       console.error("Error generating shopping list:", error);
       toast.error("Kunne ikke generere handleliste");
@@ -169,7 +169,7 @@ const NewShoppingList = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate("/handlelister")}
+            onClick={() => navigate("/app/handlelister")}
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>

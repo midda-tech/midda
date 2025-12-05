@@ -24,14 +24,14 @@ const ViewRecipe = () => {
   useEffect(() => {
     const loadRecipe = async () => {
       if (!id) {
-        navigate("/oppskrifter");
+        navigate("/app/oppskrifter");
         return;
       }
 
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        navigate("/auth");
+        navigate("/logg-inn");
         return;
       }
 
@@ -76,7 +76,7 @@ const ViewRecipe = () => {
       }
 
       toast.error("Oppskrift ikke funnet");
-      navigate("/oppskrifter");
+      navigate("/app/oppskrifter");
     };
 
     loadRecipe();
@@ -102,7 +102,7 @@ const ViewRecipe = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate("/oppskrifter")}
+              onClick={() => navigate("/app/oppskrifter")}
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
@@ -110,7 +110,7 @@ const ViewRecipe = () => {
             {!isSystemRecipe && (
               <Button
                 variant="outline"
-                onClick={() => navigate(`/oppskrifter/${id}/rediger`)}
+                onClick={() => navigate(`/app/oppskrifter/${id}/rediger`)}
                 className="gap-2"
               >
                 <Pencil className="h-4 w-4" />

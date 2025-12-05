@@ -25,7 +25,7 @@ const Settings = () => {
   const loadData = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      navigate("/auth");
+      navigate("/logg-inn");
       return;
     }
 
@@ -127,7 +127,7 @@ const Settings = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate("/hjem")}
+          onClick={() => navigate("/app")}
         >
           ← Tilbake
         </Button>

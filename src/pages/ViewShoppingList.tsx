@@ -38,7 +38,7 @@ const ViewShoppingList = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        navigate("/auth");
+        navigate("/logg-inn");
         return;
       }
 
@@ -72,7 +72,7 @@ const ViewShoppingList = () => {
       
       if (!data) {
         toast.error("Handleliste ikke funnet");
-        navigate("/handlelister");
+        navigate("/app/handlelister");
         return;
       }
 
@@ -80,7 +80,7 @@ const ViewShoppingList = () => {
     } catch (error) {
       console.error("Error fetching shopping list:", error);
       toast.error("Kunne ikke laste handleliste");
-      navigate("/handlelister");
+      navigate("/app/handlelister");
     }
   };
 
@@ -199,7 +199,7 @@ const ViewShoppingList = () => {
       if (error) throw error;
 
       toast.success("Handleliste slettet");
-      navigate("/handlelister");
+      navigate("/app/handlelister");
     } catch (error) {
       console.error("Error deleting shopping list:", error);
       toast.error("Kunne ikke slette handleliste");
@@ -223,7 +223,7 @@ const ViewShoppingList = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate("/handlelister")}
+            onClick={() => navigate("/app/handlelister")}
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
