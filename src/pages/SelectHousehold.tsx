@@ -19,7 +19,7 @@ const SelectHousehold = () => {
     const checkAuthAndHousehold = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        navigate("/auth");
+        navigate("/logg-inn");
         return;
       }
 
@@ -30,7 +30,7 @@ const SelectHousehold = () => {
         .maybeSingle();
 
       if (profile?.current_household_id) {
-        navigate("/hjem");
+        navigate("/app");
       }
     };
     checkAuthAndHousehold();
@@ -42,7 +42,7 @@ const SelectHousehold = () => {
       toast.error("Kunne ikke logge ut");
     } else {
       toast.success("Logget ut");
-      navigate("/auth");
+      navigate("/logg-inn");
     }
   };
 
@@ -80,7 +80,7 @@ const SelectHousehold = () => {
       if (profileError) throw profileError;
 
       toast.success("Husstand opprettet!");
-      navigate("/hjem");
+      navigate("/app");
     } catch (error: any) {
       toast.error(error.message || "Kunne ikke opprette husstand");
     } finally {
@@ -118,7 +118,7 @@ const SelectHousehold = () => {
       if (profileError) throw profileError;
 
       toast.success(`Ble med i ${result.household_name}!`);
-      navigate("/hjem");
+      navigate("/app");
     } catch (error: any) {
       toast.error(error.message || "Kunne ikke bli med i husstand");
     } finally {

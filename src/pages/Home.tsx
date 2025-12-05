@@ -63,9 +63,9 @@ const Home = () => {
                 </div>
               </CardHeader>
               <CardContent className="pt-0 pb-6">
-                <Button className="w-full" size="lg" onClick={() => navigate("/oppskrifter")}>
-                  Se oppskrifter
-                </Button>
+              <Button className="w-full" size="lg" onClick={() => navigate("/app/oppskrifter")}>
+                Se oppskrifter
+              </Button>
               </CardContent>
             </Card>
 
@@ -88,10 +88,10 @@ const Home = () => {
                 </div>
               </CardHeader>
               <CardContent className="pt-0 pb-6">
-                <Button 
+              <Button 
                   className="w-full" 
                   size="lg" 
-                  onClick={() => navigate("/handlelister")}
+                  onClick={() => navigate("/app/handlelister")}
                 >
                   <ShoppingCart className="h-4 w-4" />
                   Se handlelister

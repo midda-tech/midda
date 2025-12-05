@@ -98,7 +98,7 @@ const ShoppingLists = () => {
             <Button 
               size="lg" 
               className="gap-2 w-full sm:w-auto shrink-0" 
-              onClick={() => navigate("/handlelister/ny")}
+              onClick={() => navigate("/app/handlelister/ny")}
             >
               <Plus className="h-4 w-4" />
               Ny handleliste
@@ -117,7 +117,7 @@ const ShoppingLists = () => {
                 <p className="text-muted-foreground mb-6 max-w-md">
                   Lag din første handleliste ved å velge oppskrifter
                 </p>
-                <Button size="lg" onClick={() => navigate("/handlelister/ny")}>
+                <Button size="lg" onClick={() => navigate("/app/handlelister/ny")}>
                   <Plus className="h-4 w-4 mr-2" />
                   Lag handleliste
                 </Button>
@@ -140,7 +140,7 @@ const ShoppingLists = () => {
                 <Card 
                   key={list.id} 
                   className="hover:shadow-md transition-all cursor-pointer"
-                  onClick={() => navigate(`/handlelister/${list.id}`)}
+                  onClick={() => navigate(`/app/handlelister/${list.id}`)}
                 >
                   <CardContent className="p-6 space-y-4">
                     <h3 className="font-serif text-xl font-bold">{list.title}</h3>

@@ -28,7 +28,7 @@ const NewRecipe = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        navigate("/auth");
+        navigate("/logg-inn");
         return;
       }
 
@@ -91,7 +91,7 @@ const NewRecipe = () => {
       if (error) throw error;
 
       toast.success("Oppskrift lagret!");
-      navigate("/oppskrifter");
+      navigate("/app/oppskrifter");
     } catch (error) {
       if (error instanceof z.ZodError) {
         const firstError = error.errors[0];
@@ -124,7 +124,7 @@ const NewRecipe = () => {
               <RecipeForm
                 householdId={householdId}
                 onSubmit={handleSubmit}
-                onCancel={() => navigate("/oppskrifter")}
+                onCancel={() => navigate("/app/oppskrifter")}
                 submitLabel="Lagre oppskrift"
                 isSubmitting={saving}
               />

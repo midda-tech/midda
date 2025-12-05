@@ -42,14 +42,14 @@ const EditRecipe = () => {
   useEffect(() => {
     const loadRecipe = async () => {
       if (!id) {
-        navigate("/oppskrifter");
+        navigate("/app/oppskrifter");
         return;
       }
 
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        navigate("/auth");
+        navigate("/logg-inn");
         return;
       }
 
@@ -94,7 +94,7 @@ const EditRecipe = () => {
       }
 
       toast.error("Oppskrift ikke funnet");
-      navigate("/oppskrifter");
+      navigate("/app/oppskrifter");
     };
 
     loadRecipe();
@@ -162,7 +162,7 @@ const EditRecipe = () => {
       if (error) throw error;
 
       toast.success("Oppskrift oppdatert!");
-      navigate(`/oppskrifter/${id}`);
+      navigate(`/app/oppskrifter/${id}`);
     } catch (error) {
       if (error instanceof z.ZodError) {
         const firstError = error.errors[0];
@@ -191,7 +191,7 @@ const EditRecipe = () => {
       if (error) throw error;
 
       toast.success("Oppskrift slettet!");
-      navigate("/oppskrifter");
+      navigate("/app/oppskrifter");
     } catch (error) {
       console.error("Error deleting recipe:", error);
       toast.error("Kunne ikke slette oppskrift");
@@ -226,7 +226,7 @@ const EditRecipe = () => {
                 householdId={householdId}
                 isSystemRecipe={isSystemRecipe}
                 onSubmit={handleSubmit}
-                onCancel={() => navigate(`/oppskrifter/${id}`)}
+                onCancel={() => navigate(`/app/oppskrifter/${id}`)}
                 submitLabel="Lagre endringer"
                 isSubmitting={saving}
               />

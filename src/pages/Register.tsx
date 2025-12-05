@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,8 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 
-const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
+const Register = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -20,45 +19,33 @@ const Auth = () => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate("/");
+        navigate("/app");
       }
     };
     checkUser();
   }, [navigate]);
 
-  const handleAuth = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) throw error;
-        
-        toast.success("Logget inn!");
-        navigate("/");
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              first_name: firstName,
-              last_name: lastName,
-            },
-            emailRedirectTo: `${window.location.origin}/`,
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
           },
-        });
+          emailRedirectTo: `${window.location.origin}/app`,
+        },
+      });
 
-        if (error) throw error;
-        
-        toast.success("Konto opprettet! Du kan nå logge inn.");
-        setIsLogin(true);
-      }
+      if (error) throw error;
+      
+      toast.success("Konto opprettet! Du kan nå logge inn.");
+      navigate("/logg-inn");
     } catch (error: any) {
       toast.error(error.message || "Noe gikk galt");
     } finally {
@@ -69,62 +56,58 @@ const Auth = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-[420px] animate-fade-in">
-        {/* Brand Section */}
         <div className="mb-8 text-center">
-          <h1 className="font-serif text-4xl font-bold tracking-tight text-foreground mb-2">
-            Midda
-          </h1>
+          <Link to="/" className="inline-block">
+            <h1 className="font-serif text-4xl font-bold tracking-tight text-foreground mb-2">
+              Midda
+            </h1>
+          </Link>
           <p className="text-sm text-muted-foreground">
             Smart måltidsplanlegging
           </p>
         </div>
 
-        {/* Auth Card */}
         <Card className="border-border/50 shadow-medium">
           <CardHeader className="space-y-3 pb-6">
             <CardTitle className="text-2xl font-bold tracking-tight">
-              {isLogin ? "Logg inn" : "Opprett konto"}
+              Opprett konto
             </CardTitle>
-            {!isLogin && (
-              <CardDescription className="text-base">
-                Fyll ut feltene under for å komme i gang
-              </CardDescription>
-            )}
+            <CardDescription className="text-base">
+              Fyll ut feltene under for å komme i gang
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <form onSubmit={handleAuth} className="space-y-5">
-              {!isLogin && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName" className="text-sm font-medium">
-                      Fornavn
-                    </Label>
-                    <Input
-                      id="firstName"
-                      type="text"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      required={!isLogin}
-                      placeholder="Ola"
-                      className="h-11"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName" className="text-sm font-medium">
-                      Etternavn
-                    </Label>
-                    <Input
-                      id="lastName"
-                      type="text"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      required={!isLogin}
-                      placeholder="Nordmann"
-                      className="h-11"
-                    />
-                  </div>
+            <form onSubmit={handleRegister} className="space-y-5">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName" className="text-sm font-medium">
+                    Fornavn
+                  </Label>
+                  <Input
+                    id="firstName"
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                    placeholder="Ola"
+                    className="h-11"
+                  />
                 </div>
-              )}
+                <div className="space-y-2">
+                  <Label htmlFor="lastName" className="text-sm font-medium">
+                    Etternavn
+                  </Label>
+                  <Input
+                    id="lastName"
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                    placeholder="Nordmann"
+                    className="h-11"
+                  />
+                </div>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium">
                   E-post
@@ -159,7 +142,7 @@ const Auth = () => {
                 className="w-full h-11 text-base font-medium" 
                 disabled={loading}
               >
-                {loading ? "Laster..." : isLogin ? "Logg inn" : "Opprett konto"}
+                {loading ? "Laster..." : "Opprett konto"}
               </Button>
             </form>
             
@@ -174,15 +157,12 @@ const Auth = () => {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors"
+            <Link
+              to="/logg-inn"
+              className="block w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              {isLogin
-                ? "Har du ikke en konto? Registrer deg"
-                : "Har du allerede en konto? Logg inn"}
-            </button>
+              Har du allerede en konto? Logg inn
+            </Link>
           </CardContent>
         </Card>
       </div>
@@ -190,4 +170,4 @@ const Auth = () => {
   );
 };
 
-export default Auth;
+export default Register;
