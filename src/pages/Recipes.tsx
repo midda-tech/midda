@@ -12,6 +12,7 @@ import { Json } from "@/integrations/supabase/types";
 import { getRecipeIcon } from "@/lib/recipeIcons";
 import { AppHeader } from "@/components/AppHeader";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { NewRecipeDialog } from "@/components/recipe/NewRecipeDialog";
 
 interface Recipe {
   id: string;
@@ -31,6 +32,7 @@ const Recipes = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"all" | "mine">("all");
   const [dataLoading, setDataLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     if (authLoading || !householdId) return;
@@ -92,7 +94,7 @@ const Recipes = () => {
             <Button 
               size="lg" 
               className="gap-2 w-full sm:w-auto shrink-0" 
-              onClick={() => navigate("/app/oppskrifter/ny")}
+              onClick={() => setDialogOpen(true)}
             >
               <Plus className="h-4 w-4" />
               Ny oppskrift
@@ -170,6 +172,8 @@ const Recipes = () => {
           )}
         </div>
       </main>
+
+      <NewRecipeDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </div>
   );
 };
