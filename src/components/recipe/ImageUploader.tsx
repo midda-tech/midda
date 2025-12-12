@@ -1,61 +1,74 @@
-import { useState, useRef, useEffect, DragEvent, ChangeEvent, ClipboardEvent } from "react";
+import { useState, useRef, useEffect, DragEvent, ChangeEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Image as ImageIcon } from "lucide-react";
+import { X, ImageIcon, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+interface ImageFile {
+  file: File;
+  previewUrl: string;
+}
+
 interface ImageUploaderProps {
-  onImageSelect: (file: File) => void;
-  onClear: () => void;
-  previewUrl: string | null;
+  images: ImageFile[];
+  onImagesChange: (images: ImageFile[]) => void;
   disabled?: boolean;
 }
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export function ImageUploader({
-  onImageSelect,
-  onClear,
-  previewUrl,
+  images,
+  onImagesChange,
   disabled,
 }: ImageUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = (file: File) => {
-    if (!ACCEPTED_TYPES.includes(file.type)) {
-      return;
+  const addFiles = (files: FileList | File[]) => {
+    const newImages: ImageFile[] = [];
+    for (const file of files) {
+      if (ACCEPTED_TYPES.includes(file.type)) {
+        newImages.push({ file, previewUrl: URL.createObjectURL(file) });
+      }
     }
-    onImageSelect(file);
+    if (newImages.length > 0) {
+      onImagesChange([...images, ...newImages]);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    const updated = [...images];
+    URL.revokeObjectURL(updated[index].previewUrl);
+    updated.splice(index, 1);
+    onImagesChange(updated);
   };
 
   // Global paste listener
   useEffect(() => {
     const handlePaste = (e: globalThis.ClipboardEvent) => {
-      if (disabled || previewUrl) return;
+      if (disabled) return;
       
       const items = e.clipboardData?.items;
       if (!items) return;
 
+      const files: File[] = [];
       for (const item of items) {
         if (item.type.startsWith("image/")) {
           const file = item.getAsFile();
-          if (file) {
-            handleFile(file);
-            break;
-          }
+          if (file) files.push(file);
         }
       }
+      if (files.length > 0) addFiles(files);
     };
 
     document.addEventListener("paste", handlePaste);
     return () => document.removeEventListener("paste", handlePaste);
-  }, [disabled, previewUrl]);
+  }, [disabled, images]);
 
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (file) handleFile(file);
+    addFiles(e.dataTransfer.files);
   };
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
@@ -68,48 +81,18 @@ export function ImageUploader({
   };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) handleFile(file);
+    if (e.target.files) {
+      addFiles(e.target.files);
+      e.target.value = "";
+    }
   };
 
   const handleClick = () => {
     inputRef.current?.click();
   };
 
-  if (previewUrl) {
-    return (
-      <div className="relative">
-        <img
-          src={previewUrl}
-          alt="Oppskriftsbilde"
-          className="w-full rounded-lg object-contain max-h-80"
-        />
-        <Button
-          variant="secondary"
-          size="icon"
-          className="absolute top-2 right-2"
-          onClick={onClear}
-          disabled={disabled}
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
-    );
-  }
-
   return (
-    <div
-      onClick={handleClick}
-      onDrop={handleDrop}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      className={cn(
-        "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
-        isDragging
-          ? "border-primary bg-primary/5"
-          : "border-muted-foreground/25 hover:border-primary/50"
-      )}
-    >
+    <div className="space-y-4">
       <input
         ref={inputRef}
         type="file"
@@ -117,22 +100,63 @@ export function ImageUploader({
         onChange={handleChange}
         className="hidden"
         disabled={disabled}
+        multiple
       />
-      <div className="flex flex-col items-center gap-3">
-        <div className="rounded-full bg-muted p-4">
-          <ImageIcon className="h-8 w-8 text-muted-foreground" />
+
+      {/* Image previews */}
+      {images.length > 0 && (
+        <div className="grid grid-cols-2 gap-3">
+          {images.map((img, index) => (
+            <div key={index} className="relative">
+              <img
+                src={img.previewUrl}
+                alt={`Bilde ${index + 1}`}
+                className="w-full aspect-square rounded-lg object-cover"
+              />
+              <Button
+                variant="secondary"
+                size="icon"
+                className="absolute top-1.5 right-1.5 h-7 w-7"
+                onClick={() => removeImage(index)}
+                disabled={disabled}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
         </div>
-        <div>
-          <p className="font-medium text-foreground">
-            Trykk for å velge bilde
-          </p>
-          <p className="text-sm text-muted-foreground mt-1">
-            eller lim inn fra utklippstavlen (Ctrl+V)
-          </p>
+      )}
+
+      {/* Upload zone */}
+      <div
+        onClick={handleClick}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        className={cn(
+          "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
+          isDragging
+            ? "border-primary bg-primary/5"
+            : "border-muted-foreground/25 hover:border-primary/50"
+        )}
+      >
+        <div className="flex flex-col items-center gap-2">
+          <div className="rounded-full bg-muted p-3">
+            {images.length > 0 ? (
+              <Plus className="h-6 w-6 text-muted-foreground" />
+            ) : (
+              <ImageIcon className="h-6 w-6 text-muted-foreground" />
+            )}
+          </div>
+          <div>
+            <p className="font-medium text-foreground text-sm">
+              {images.length > 0 ? "Legg til flere bilder" : "Trykk for å velge bilder"}
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              eller lim inn (Ctrl+V)
+            </p>
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground">
-          JPG, PNG eller WebP
-        </p>
       </div>
     </div>
   );
