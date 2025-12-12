@@ -75,7 +75,7 @@ export const DynamicTextFields = ({
               value={field}
               onChange={(e) => handleChange(index, e.target.value, e.target)}
               onKeyDown={(e) => handleKeyDown(e, index)}
-              className="resize-none py-2 text-sm min-h-[2.5rem] pr-8 overflow-hidden"
+              className="resize-none py-1.5 text-sm min-h-0 pr-8 overflow-hidden"
               disabled={disabled}
             />
             {fields.length > minFields && !disabled && (
