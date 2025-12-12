@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, DragEvent, ChangeEvent } from "react";
+import { useState, useRef, useEffect, useCallback, DragEvent, ChangeEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { X, ImageIcon, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -24,7 +24,7 @@ export function ImageUploader({
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const addFiles = (files: FileList | File[]) => {
+  const addFiles = useCallback((files: FileList | File[], currentImages: ImageFile[]) => {
     const newImages: ImageFile[] = [];
     for (const file of files) {
       if (ACCEPTED_TYPES.includes(file.type)) {
@@ -32,9 +32,9 @@ export function ImageUploader({
       }
     }
     if (newImages.length > 0) {
-      onImagesChange([...images, ...newImages]);
+      onImagesChange([...currentImages, ...newImages]);
     }
-  };
+  }, [onImagesChange]);
 
   const removeImage = (index: number) => {
     const updated = [...images];
@@ -43,7 +43,10 @@ export function ImageUploader({
     onImagesChange(updated);
   };
 
-  // Global paste listener
+  // Global paste listener - use ref for current images to avoid stale closure
+  const imagesRef = useRef(images);
+  imagesRef.current = images;
+
   useEffect(() => {
     const handlePaste = (e: globalThis.ClipboardEvent) => {
       if (disabled) return;
@@ -58,17 +61,17 @@ export function ImageUploader({
           if (file) files.push(file);
         }
       }
-      if (files.length > 0) addFiles(files);
+      if (files.length > 0) addFiles(files, imagesRef.current);
     };
 
     document.addEventListener("paste", handlePaste);
     return () => document.removeEventListener("paste", handlePaste);
-  }, [disabled, images]);
+  }, [disabled, addFiles]);
 
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
-    addFiles(e.dataTransfer.files);
+    addFiles(e.dataTransfer.files, images);
   };
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
@@ -82,7 +85,7 @@ export function ImageUploader({
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      addFiles(e.target.files);
+      addFiles(e.target.files, images);
       e.target.value = "";
     }
   };
