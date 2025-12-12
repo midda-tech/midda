@@ -10,38 +10,32 @@ import { ImageUploader } from "@/components/recipe/ImageUploader";
 import { compressImage } from "@/lib/imageCompression";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 
+interface ImageFile {
+  file: File;
+  previewUrl: string;
+}
+
 const NewRecipeFromImage = () => {
   const navigate = useNavigate();
   const { loading: authLoading } = useRequireAuth();
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [images, setImages] = useState<ImageFile[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const handleImageSelect = (file: File) => {
-    setSelectedFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
-  };
-
-  const handleClear = () => {
-    setSelectedFile(null);
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-    }
-  };
-
   const handleAnalyze = async () => {
-    if (!selectedFile) return;
+    if (images.length === 0) return;
 
     setIsAnalyzing(true);
 
     try {
-      const { base64, mediaType } = await compressImage(selectedFile);
+      const compressedImages = await Promise.all(
+        images.map(async (img) => {
+          const { base64, mediaType } = await compressImage(img.file);
+          return { base64, media_type: mediaType };
+        })
+      );
 
       const { data, error } = await supabase.functions.invoke("parse-recipe", {
-        body: {
-          images: [{ base64, media_type: mediaType }],
-        },
+        body: { images: compressedImages },
       });
 
       if (error) throw error;
@@ -76,7 +70,7 @@ const NewRecipeFromImage = () => {
             <CardContent className="p-6 space-y-6">
               <div className="text-center">
                 <h2 className="font-serif text-2xl font-bold text-foreground">
-                  Last opp bilde
+                  Last opp bilder
                 </h2>
                 <p className="text-sm text-muted-foreground mt-1">
                   Ta bilde av en oppskrift så leser vi den for deg
@@ -84,9 +78,8 @@ const NewRecipeFromImage = () => {
               </div>
 
               <ImageUploader
-                onImageSelect={handleImageSelect}
-                onClear={handleClear}
-                previewUrl={previewUrl}
+                images={images}
+                onImagesChange={setImages}
                 disabled={isAnalyzing}
               />
 
@@ -102,7 +95,7 @@ const NewRecipeFromImage = () => {
                 <Button
                   className="flex-1"
                   onClick={handleAnalyze}
-                  disabled={!selectedFile || isAnalyzing}
+                  disabled={images.length === 0 || isAnalyzing}
                 >
                   {isAnalyzing ? (
                     <>
@@ -110,7 +103,7 @@ const NewRecipeFromImage = () => {
                       Leser oppskrift...
                     </>
                   ) : (
-                    "Analyser bilde"
+                    `Analyser ${images.length > 0 ? `(${images.length})` : ""}`
                   )}
                 </Button>
               </div>
