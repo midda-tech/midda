@@ -1,6 +1,6 @@
-import { useState, useRef, DragEvent, ChangeEvent } from "react";
+import { useState, useRef, useEffect, DragEvent, ChangeEvent, ClipboardEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { Upload, X, Image as ImageIcon } from "lucide-react";
+import { X, Image as ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ImageUploaderProps {
@@ -27,6 +27,29 @@ export function ImageUploader({
     }
     onImageSelect(file);
   };
+
+  // Global paste listener
+  useEffect(() => {
+    const handlePaste = (e: globalThis.ClipboardEvent) => {
+      if (disabled || previewUrl) return;
+      
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (const item of items) {
+        if (item.type.startsWith("image/")) {
+          const file = item.getAsFile();
+          if (file) {
+            handleFile(file);
+            break;
+          }
+        }
+      }
+    };
+
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
+  }, [disabled, previewUrl]);
 
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -104,7 +127,7 @@ export function ImageUploader({
             Trykk for å velge bilde
           </p>
           <p className="text-sm text-muted-foreground mt-1">
-            eller dra og slipp her
+            eller lim inn fra utklippstavlen (Ctrl+V)
           </p>
         </div>
         <p className="text-xs text-muted-foreground">
