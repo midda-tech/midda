@@ -6,7 +6,7 @@ import { DynamicTextFields } from "@/components/recipe/DynamicTextFields";
 import { IconSelector } from "@/components/recipe/IconSelector";
 import { TagSelector } from "@/components/recipe/TagSelector";
 import { useRecipeTags } from "@/hooks/useRecipeTags";
-import { getRecipeIcon } from "@/lib/recipeIcons";
+import { getRecipeIcon, DEFAULT_ICON } from "@/lib/recipeIcons";
 
 export interface RecipeFormData {
   title: string;
@@ -30,7 +30,7 @@ interface RecipeFormProps {
 const defaultFormData: RecipeFormData = {
   title: "",
   servings: 2,
-  icon: 1,
+  icon: DEFAULT_ICON,
   ingredients: [""],
   instructions: [""],
   tags: []
