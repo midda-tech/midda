@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, useCallback, DragEvent, ChangeEvent } from "react";
+import { useState, useRef, useEffect, useCallback, DragEvent, ChangeEvent, ClipboardEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { X, ImageIcon, Plus } from "lucide-react";
+import { X, ImageIcon, Plus, Clipboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ImageFile {
@@ -94,6 +94,28 @@ export function ImageUploader({
     inputRef.current?.click();
   };
 
+  const handlePasteFromClipboard = async () => {
+    if (disabled) return;
+    try {
+      const clipboardItems = await navigator.clipboard.read();
+      const files: File[] = [];
+      for (const item of clipboardItems) {
+        for (const type of item.types) {
+          if (type.startsWith("image/")) {
+            const blob = await item.getType(type);
+            const file = new File([blob], `pasted-image.${type.split("/")[1]}`, { type });
+            files.push(file);
+          }
+        }
+      }
+      if (files.length > 0) {
+        addFiles(files, images);
+      }
+    } catch {
+      // Clipboard API not available or permission denied - silently fail
+    }
+  };
+
   return (
     <div className="space-y-4">
       <input
@@ -131,32 +153,43 @@ export function ImageUploader({
       )}
 
       {/* Upload zone */}
-      <div
-        onClick={handleClick}
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        className={cn(
-          "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
-          isDragging
-            ? "border-primary bg-primary/5"
-            : "border-muted-foreground/25 hover:border-primary/50"
-        )}
-      >
-        <div className="flex flex-col items-center gap-2">
-          <div className="rounded-full bg-muted p-3">
-            {images.length > 0 ? (
-              <Plus className="h-6 w-6 text-muted-foreground" />
-            ) : (
-              <ImageIcon className="h-6 w-6 text-muted-foreground" />
-            )}
-          </div>
-          <div>
+      <div className="grid grid-cols-2 gap-3">
+        <div
+          onClick={handleClick}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          className={cn(
+            "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
+            isDragging
+              ? "border-primary bg-primary/5"
+              : "border-muted-foreground/25 hover:border-primary/50"
+          )}
+        >
+          <div className="flex flex-col items-center gap-2">
+            <div className="rounded-full bg-muted p-3">
+              {images.length > 0 ? (
+                <Plus className="h-6 w-6 text-muted-foreground" />
+              ) : (
+                <ImageIcon className="h-6 w-6 text-muted-foreground" />
+              )}
+            </div>
             <p className="font-medium text-foreground text-sm">
-              {images.length > 0 ? "Legg til flere bilder" : "Trykk for å velge bilder"}
+              {images.length > 0 ? "Legg til flere" : "Velg bilder"}
             </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              eller lim inn (Ctrl+V)
+          </div>
+        </div>
+
+        <div
+          onClick={handlePasteFromClipboard}
+          className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors border-muted-foreground/25 hover:border-primary/50"
+        >
+          <div className="flex flex-col items-center gap-2">
+            <div className="rounded-full bg-muted p-3">
+              <Clipboard className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <p className="font-medium text-foreground text-sm">
+              Lim inn
             </p>
           </div>
         </div>
