@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { AppHeader } from "@/components/AppHeader";
 import { RecipeForm, RecipeFormData } from "@/components/recipe/RecipeForm";
+import { DEFAULT_ICON } from "@/lib/recipeIcons";
 import { Trash2 } from "lucide-react";
 import { z } from "zod";
 
@@ -116,7 +117,7 @@ const EditRecipe = () => {
     return {
       title: recipe.title,
       servings: recipe.servings,
-      icon: recipe.icon || 1,
+      icon: recipe.icon ?? DEFAULT_ICON,
       ingredients: ingredients.length > 0 ? ingredients : [""],
       instructions: instructions.length > 0 ? instructions : [""],
       tags
