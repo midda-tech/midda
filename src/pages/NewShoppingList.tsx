@@ -302,7 +302,7 @@ const NewShoppingList = () => {
       )}
 
       <Dialog open={showTitleDialog} onOpenChange={setShowTitleDialog}>
-        <DialogContent>
+        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>Gi handlelisten en tittel</DialogTitle>
             <DialogDescription>
