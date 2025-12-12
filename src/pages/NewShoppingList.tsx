@@ -321,7 +321,6 @@ const NewShoppingList = () => {
                   handleGenerate();
                 }
               }}
-              autoFocus
             />
             <button
               type="button"
