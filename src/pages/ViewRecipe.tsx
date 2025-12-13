@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/AppHeader";
 import { getRecipeIcon } from "@/lib/recipeIcons";
-import { Pencil, ArrowLeft, Users } from "lucide-react";
+import { Pencil, ArrowLeft, Users, Plus } from "lucide-react";
 
 interface RecipeInstruction {
   step: number;
@@ -18,8 +18,11 @@ const ViewRecipe = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
+  const [adding, setAdding] = useState(false);
   const [recipe, setRecipe] = useState<any>(null);
   const [isSystemRecipe, setIsSystemRecipe] = useState(false);
+  const [householdId, setHouseholdId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadRecipe = async () => {
@@ -45,6 +48,9 @@ const ViewRecipe = () => {
         navigate("/velg-husstand");
         return;
       }
+
+      setHouseholdId(profile.current_household_id);
+      setUserId(session.user.id);
 
       // Try household recipes first
       const { data: householdRecipe } = await supabase
@@ -82,6 +88,36 @@ const ViewRecipe = () => {
     loadRecipe();
   }, [id, navigate]);
 
+  const addToHousehold = async () => {
+    if (!householdId || !userId || !recipe) return;
+    
+    setAdding(true);
+    try {
+      const { error } = await supabase
+        .from("household_recipes")
+        .insert({
+          household_id: householdId,
+          created_by: userId,
+          title: recipe.title,
+          servings: recipe.servings,
+          ingredients: recipe.ingredients,
+          instructions: recipe.instructions,
+          tags: recipe.tags,
+          icon: recipe.icon,
+        });
+
+      if (error) throw error;
+
+      toast.success("Oppskrift lagt til i dine oppskrifter");
+      navigate("/app/oppskrifter");
+    } catch (error) {
+      console.error("Error adding recipe:", error);
+      toast.error("Kunne ikke legge til oppskrift");
+    } finally {
+      setAdding(false);
+    }
+  };
+
   if (loading || !recipe) {
     return null;
   }
@@ -107,7 +143,16 @@ const ViewRecipe = () => {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex-1" />
-            {!isSystemRecipe && (
+            {isSystemRecipe ? (
+              <Button
+                onClick={addToHousehold}
+                disabled={adding}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                {adding ? "Legger til..." : "Legg til"}
+              </Button>
+            ) : (
               <Button
                 variant="outline"
                 onClick={() => navigate(`/app/oppskrifter/${id}/rediger`)}
