@@ -53,7 +53,7 @@ const ViewSystemRecipe = () => {
       
       if (!recipeData) {
         toast.error("Oppskriften ble ikke funnet");
-        navigate("/app/oppdag");
+        navigate("/app/oppskrifter/oppdag");
         return;
       }
 
@@ -134,7 +134,7 @@ const ViewSystemRecipe = () => {
             variant="ghost"
             size="sm"
             className="mb-4 -ml-2 gap-1 text-muted-foreground"
-            onClick={() => navigate("/app/oppdag")}
+            onClick={() => navigate("/app/oppskrifter/oppdag")}
           >
             <ArrowLeft className="h-4 w-4" />
             Tilbake

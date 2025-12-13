@@ -41,8 +41,8 @@ const App = () => (
           {/* App routes (authenticated) */}
           <Route path="/app" element={<Home />} />
           <Route path="/app/oppskrifter" element={<Recipes />} />
-          <Route path="/app/oppdag" element={<Discover />} />
-          <Route path="/app/oppdag/:id" element={<ViewSystemRecipe />} />
+          <Route path="/app/oppskrifter/oppdag" element={<Discover />} />
+          <Route path="/app/oppskrifter/oppdag/:id" element={<ViewSystemRecipe />} />
           <Route path="/app/oppskrifter/ny" element={<NewRecipe />} />
           <Route path="/app/oppskrifter/fra-bilde" element={<NewRecipeFromImage />} />
           <Route path="/app/oppskrifter/:id" element={<ViewRecipe />} />
