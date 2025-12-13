@@ -11,6 +11,7 @@ import { Json } from "@/integrations/supabase/types";
 import { getRecipeIcon } from "@/lib/recipeIcons";
 import { AppHeader } from "@/components/AppHeader";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useAddRecipeToHousehold } from "@/hooks/useAddRecipeToHousehold";
 
 interface SystemRecipe {
   id: string;
@@ -25,6 +26,7 @@ interface SystemRecipe {
 const Discover = () => {
   const navigate = useNavigate();
   const { loading: authLoading, householdId, userId } = useRequireAuth();
+  const { adding, addToHousehold } = useAddRecipeToHousehold(householdId, userId);
   const [systemRecipes, setSystemRecipes] = useState<SystemRecipe[]>([]);
   const [savedRecipeIds, setSavedRecipeIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
@@ -74,30 +76,11 @@ const Discover = () => {
 
     setSavingId(recipe.id);
     
-    try {
-      const { error } = await supabase
-        .from("household_recipes")
-        .insert({
-          household_id: householdId,
-          created_by: userId,
-          title: recipe.title,
-          servings: recipe.servings,
-          ingredients: recipe.ingredients,
-          instructions: recipe.instructions,
-          tags: recipe.tags,
-          icon: recipe.icon
-        });
-
-      if (error) throw error;
-
+    const success = await addToHousehold(recipe);
+    if (success) {
       setSavedRecipeIds(prev => new Set([...prev, recipe.id]));
-      toast.success(`"${recipe.title}" lagt til i dine oppskrifter`);
-    } catch (error) {
-      console.error("Error saving recipe:", error);
-      toast.error("Kunne ikke lagre oppskriften");
-    } finally {
-      setSavingId(null);
     }
+    setSavingId(null);
   };
 
   const filteredRecipes = systemRecipes.filter(recipe =>
