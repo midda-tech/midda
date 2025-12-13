@@ -102,7 +102,7 @@ const ViewRecipe = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate("/app/oppskrifter")}
+              onClick={() => navigate(isSystemRecipe ? "/app/oppskrifter/oppdag" : "/app/oppskrifter")}
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>

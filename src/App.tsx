@@ -11,7 +11,7 @@ import SelectHousehold from "./pages/SelectHousehold";
 import Home from "./pages/Home";
 import Recipes from "./pages/Recipes";
 import Discover from "./pages/Discover";
-import ViewSystemRecipe from "./pages/ViewSystemRecipe";
+
 import NewRecipe from "./pages/NewRecipe";
 import NewRecipeFromImage from "./pages/NewRecipeFromImage";
 import ViewRecipe from "./pages/ViewRecipe";
@@ -42,7 +42,7 @@ const App = () => (
           <Route path="/app" element={<Home />} />
           <Route path="/app/oppskrifter" element={<Recipes />} />
           <Route path="/app/oppskrifter/oppdag" element={<Discover />} />
-          <Route path="/app/oppskrifter/oppdag/:id" element={<ViewSystemRecipe />} />
+          
           <Route path="/app/oppskrifter/ny" element={<NewRecipe />} />
           <Route path="/app/oppskrifter/fra-bilde" element={<NewRecipeFromImage />} />
           <Route path="/app/oppskrifter/:id" element={<ViewRecipe />} />

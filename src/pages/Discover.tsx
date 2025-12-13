@@ -153,7 +153,7 @@ const Discover = () => {
               <Card 
                   key={recipe.id} 
                   className="hover:shadow-md transition-shadow cursor-pointer relative"
-                  onClick={() => navigate(`/app/oppskrifter/oppdag/${recipe.id}`)}
+                  onClick={() => navigate(`/app/oppskrifter/${recipe.id}`)}
                 >
                   <CardHeader className="text-center space-y-4 pb-4">
                     <div className="flex justify-center">
