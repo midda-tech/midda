@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { AppHeader } from "@/components/AppHeader";
 import { getRecipeIcon } from "@/lib/recipeIcons";
 import { Pencil, ArrowLeft, Users, Plus } from "lucide-react";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useAddRecipeToHousehold } from "@/hooks/useAddRecipeToHousehold";
 
 interface RecipeInstruction {
   step: number;
@@ -17,47 +19,27 @@ interface RecipeInstruction {
 const ViewRecipe = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { loading: authLoading, householdId, userId } = useRequireAuth();
+  const { adding, addToHousehold } = useAddRecipeToHousehold(householdId, userId);
   const [loading, setLoading] = useState(true);
-  const [adding, setAdding] = useState(false);
   const [recipe, setRecipe] = useState<any>(null);
   const [isSystemRecipe, setIsSystemRecipe] = useState(false);
-  const [householdId, setHouseholdId] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (authLoading || !householdId) return;
+
     const loadRecipe = async () => {
       if (!id) {
         navigate("/app/oppskrifter");
         return;
       }
 
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        navigate("/logg-inn");
-        return;
-      }
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("current_household_id")
-        .eq("id", session.user.id)
-        .maybeSingle();
-
-      if (!profile?.current_household_id) {
-        navigate("/velg-husstand");
-        return;
-      }
-
-      setHouseholdId(profile.current_household_id);
-      setUserId(session.user.id);
-
       // Try household recipes first
       const { data: householdRecipe } = await supabase
         .from("household_recipes")
         .select("*")
         .eq("id", id)
-        .eq("household_id", profile.current_household_id)
+        .eq("household_id", householdId)
         .maybeSingle();
 
       if (householdRecipe) {
@@ -86,37 +68,7 @@ const ViewRecipe = () => {
     };
 
     loadRecipe();
-  }, [id, navigate]);
-
-  const addToHousehold = async () => {
-    if (!householdId || !userId || !recipe) return;
-    
-    setAdding(true);
-    try {
-      const { error } = await supabase
-        .from("household_recipes")
-        .insert({
-          household_id: householdId,
-          created_by: userId,
-          title: recipe.title,
-          servings: recipe.servings,
-          ingredients: recipe.ingredients,
-          instructions: recipe.instructions,
-          tags: recipe.tags,
-          icon: recipe.icon,
-        });
-
-      if (error) throw error;
-
-      toast.success("Oppskrift lagt til i dine oppskrifter");
-      navigate("/app/oppskrifter");
-    } catch (error) {
-      console.error("Error adding recipe:", error);
-      toast.error("Kunne ikke legge til oppskrift");
-    } finally {
-      setAdding(false);
-    }
-  };
+  }, [id, navigate, authLoading, householdId]);
 
   if (loading || !recipe) {
     return null;
@@ -145,7 +97,7 @@ const ViewRecipe = () => {
             <div className="flex-1" />
             {isSystemRecipe ? (
               <Button
-                onClick={addToHousehold}
+                onClick={() => addToHousehold(recipe)}
                 disabled={adding}
                 className="gap-2"
               >
