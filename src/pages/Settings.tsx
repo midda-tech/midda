@@ -7,6 +7,7 @@ import { HouseholdSection } from "@/components/settings/HouseholdSection";
 import { AppSettingsSection } from "@/components/settings/AppSettingsSection";
 import { ShoppingListCategoriesSection } from "@/components/settings/ShoppingListCategoriesSection";
 import { AccountSection } from "@/components/settings/AccountSection";
+import { VersionSection } from "@/components/settings/VersionSection";
 import { Household } from "@/types/household";
 
 interface Profile {
@@ -164,6 +165,8 @@ const Settings = () => {
         )}
 
         <AccountSection />
+
+        <VersionSection />
       </main>
     </div>
   );
