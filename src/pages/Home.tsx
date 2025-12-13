@@ -20,13 +20,12 @@ const Home = () => {
     if (authLoading || !householdId) return;
 
     const fetchCounts = async () => {
-      const [systemRecipesResult, householdRecipesResult, listCountResult] = await Promise.all([
-        supabase.from("system_recipes").select("id", { count: "exact", head: true }),
+      const [householdRecipesResult, listCountResult] = await Promise.all([
         supabase.from("household_recipes").select("id", { count: "exact", head: true }).eq("household_id", householdId),
         supabase.from("shopping_lists").select("id", { count: "exact", head: true }).eq("household_id", householdId)
       ]);
       
-      setRecipeCount((systemRecipesResult.count || 0) + (householdRecipesResult.count || 0));
+      setRecipeCount(householdRecipesResult.count || 0);
       setShoppingListCount(listCountResult.count || 0);
       setDataLoading(false);
     };
