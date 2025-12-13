@@ -4,9 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Json } from "@/integrations/supabase/types";
 import { getRecipeIcon } from "@/lib/recipeIcons";
@@ -22,7 +21,6 @@ interface Recipe {
   instructions: Json;
   tags: Json;
   icon: number | null;
-  isSystem: boolean;
 }
 
 const Recipes = () => {
@@ -30,7 +28,6 @@ const Recipes = () => {
   const { loading: authLoading, householdId } = useRequireAuth();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<"all" | "mine">("all");
   const [dataLoading, setDataLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -42,20 +39,14 @@ const Recipes = () => {
 
   const fetchRecipes = async (hId: string) => {
     try {
-      const [{ data: systemRecipes, error: systemError }, { data: householdRecipes, error: householdError }] = await Promise.all([
-        supabase.from("system_recipes").select("*"),
-        supabase.from("household_recipes").select("*").eq("household_id", hId)
-      ]);
+      const { data: householdRecipes, error } = await supabase
+        .from("household_recipes")
+        .select("*")
+        .eq("household_id", hId);
 
-      if (systemError) throw systemError;
-      if (householdError) throw householdError;
+      if (error) throw error;
 
-      setRecipes([
-        ...(systemRecipes || []).map(r => ({ ...r, isSystem: true })),
-        ...(householdRecipes || []).map(r => ({ ...r, isSystem: false })),
-      ]);
-      
-      setActiveTab((householdRecipes?.length || 0) > 0 ? "mine" : "all");
+      setRecipes(householdRecipes || []);
     } catch (error) {
       console.error("Error fetching recipes:", error);
       toast.error("Kunne ikke laste oppskrifter");
@@ -64,13 +55,9 @@ const Recipes = () => {
     }
   };
 
-  const filteredRecipes = recipes.filter(recipe => {
-    const matchesSearch = recipe.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTab = activeTab === "all" || (activeTab === "mine" && !recipe.isSystem);
-    return matchesSearch && matchesTab;
-  });
-
-  const householdRecipesCount = recipes.filter(r => !r.isSystem).length;
+  const filteredRecipes = recipes.filter(recipe =>
+    recipe.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (authLoading || dataLoading) {
     return null;
@@ -88,17 +75,28 @@ const Recipes = () => {
                 Oppskrifter
               </h2>
               <p className="text-muted-foreground text-sm mt-1">
-                {filteredRecipes.length} oppskrifter tilgjengelig
+                {filteredRecipes.length} oppskrifter
               </p>
             </div>
-            <Button 
-              size="lg" 
-              className="gap-2 w-full sm:w-auto shrink-0" 
-              onClick={() => setDialogOpen(true)}
-            >
-              <Plus className="h-4 w-4" />
-              Ny oppskrift
-            </Button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button 
+                variant="outline"
+                size="lg" 
+                className="gap-2 flex-1 sm:flex-initial" 
+                onClick={() => navigate("/app/oppdag")}
+              >
+                <Sparkles className="h-4 w-4" />
+                Oppdag
+              </Button>
+              <Button 
+                size="lg" 
+                className="gap-2 flex-1 sm:flex-initial" 
+                onClick={() => setDialogOpen(true)}
+              >
+                <Plus className="h-4 w-4" />
+                Ny oppskrift
+              </Button>
+            </div>
           </div>
 
           <div className="relative">
@@ -110,17 +108,6 @@ const Recipes = () => {
               className="pl-9"
             />
           </div>
-
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "all" | "mine")}>
-            <TabsList className="w-full">
-              <TabsTrigger value="mine" className="flex-1 text-sm">
-                Mine oppskrifter ({householdRecipesCount})
-              </TabsTrigger>
-              <TabsTrigger value="all" className="flex-1 text-sm">
-                Alle oppskrifter ({recipes.length})
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
 
           <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredRecipes.map((recipe) => (
