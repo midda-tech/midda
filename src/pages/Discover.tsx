@@ -70,6 +70,7 @@ const Discover = () => {
 
   const handleSaveRecipe = async (recipe: SystemRecipe, e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     
     if (!householdId || !userId) return;
     if (savedRecipeIds.has(recipe.id)) return;
