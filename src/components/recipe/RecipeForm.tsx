@@ -46,7 +46,7 @@ export const RecipeForm = ({
   isSubmitting
 }: RecipeFormProps) => {
   const [formData, setFormData] = useState<RecipeFormData>(initialData || defaultFormData);
-  const { tags: availableTags, addTag } = useRecipeTags(householdId);
+  const { tags: availableTags } = useRecipeTags(householdId);
 
   useEffect(() => {
     if (initialData) {
@@ -109,10 +109,9 @@ export const RecipeForm = ({
   };
 
   const handleNewTag = (newTag: string) => {
-    const trimmedTag = newTag.trim();
+    const trimmedTag = newTag.trim().toLowerCase();
     if (trimmedTag && !formData.tags.includes(trimmedTag)) {
       setFormData(prev => ({ ...prev, tags: [...prev.tags, trimmedTag] }));
-      addTag(trimmedTag);
     }
   };
 
