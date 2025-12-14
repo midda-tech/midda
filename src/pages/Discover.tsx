@@ -26,7 +26,7 @@ interface SystemRecipe {
 const Discover = () => {
   const navigate = useNavigate();
   const { loading: authLoading, householdId, userId } = useRequireAuth();
-  const { adding, addToHousehold } = useAddRecipeToHousehold(householdId, userId);
+  const { addToHousehold } = useAddRecipeToHousehold(householdId, userId);
   const [systemRecipes, setSystemRecipes] = useState<SystemRecipe[]>([]);
   const [savedRecipeIds, setSavedRecipeIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
