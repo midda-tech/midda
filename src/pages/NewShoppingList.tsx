@@ -29,14 +29,12 @@ interface Recipe {
   ingredients: Json;
   tags: Json;
   icon: number | null;
-  isSystem: boolean;
 }
 
 interface SelectedRecipe {
   id: string;
   title: string;
   servings: number;
-  table: "system_recipes" | "household_recipes";
 }
 
 const NewShoppingList = () => {
@@ -60,18 +58,14 @@ const NewShoppingList = () => {
 
   const fetchRecipes = async (hId: string) => {
     try {
-      const [{ data: systemRecipes, error: systemError }, { data: householdRecipes, error: householdError }] = await Promise.all([
-        supabase.from("system_recipes").select("*"),
-        supabase.from("household_recipes").select("*").eq("household_id", hId)
-      ]);
+      const { data: householdRecipes, error } = await supabase
+        .from("household_recipes")
+        .select("*")
+        .eq("household_id", hId);
 
-      if (systemError) throw systemError;
-      if (householdError) throw householdError;
+      if (error) throw error;
 
-      setRecipes([
-        ...(systemRecipes || []).map(r => ({ ...r, isSystem: true })),
-        ...(householdRecipes || []).map(r => ({ ...r, isSystem: false })),
-      ]);
+      setRecipes(householdRecipes || []);
     } catch (error) {
       console.error("Error fetching recipes:", error);
       toast.error("Kunne ikke laste oppskrifter");
@@ -99,8 +93,7 @@ const NewShoppingList = () => {
       setSelectedRecipes(prev => [...prev, {
         id: recipe.id,
         title: recipe.title,
-        servings: recipe.servings,
-        table: recipe.isSystem ? "system_recipes" : "household_recipes"
+        servings: recipe.servings
       }]);
     }
   };
@@ -137,7 +130,7 @@ const NewShoppingList = () => {
         body: {
           recipe_selections: selectedRecipes.map(r => ({
             id: r.id,
-            table: r.table,
+            table: "household_recipes",
             servings: r.servings
           })),
           shoppingListTitle: listTitle.trim()
@@ -270,9 +263,19 @@ const NewShoppingList = () => {
 
           {filteredRecipes.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">
-                Ingen oppskrifter funnet
+              <p className="text-muted-foreground mb-4">
+                {recipes.length === 0 
+                  ? "Du har ingen oppskrifter ennå" 
+                  : "Ingen oppskrifter funnet"}
               </p>
+              {recipes.length === 0 && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate("/app/oppskrifter")}
+                >
+                  Gå til oppskrifter
+                </Button>
+              )}
             </div>
           )}
         </div>
