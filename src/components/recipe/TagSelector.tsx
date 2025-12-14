@@ -62,10 +62,12 @@ export const TagSelector = ({
         <Command>
           <CommandInput 
             placeholder="Søk eller skriv ny tag..." 
+            autoCapitalize="off"
+            className="lowercase"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
-                const value = e.currentTarget.value;
+                const value = e.currentTarget.value.toLowerCase().trim();
                 if (value) {
                   onNewTag(value);
                   e.currentTarget.value = "";
