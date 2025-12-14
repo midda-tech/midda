@@ -97,7 +97,12 @@ const ViewRecipe = () => {
             <div className="flex-1" />
             {isSystemRecipe ? (
               <Button
-                onClick={() => addToHousehold(recipe)}
+                onClick={async () => {
+                  const success = await addToHousehold(recipe);
+                  if (success) {
+                    navigate("/app/oppskrifter/oppdag");
+                  }
+                }}
                 disabled={adding}
                 className="gap-2"
               >
