@@ -159,7 +159,7 @@ export const ShoppingListCategoriesSection = ({
           Handlelistekategorier
         </CardTitle>
         <CardDescription>
-          Tilpass kategoriene som brukes når handlelister genereres
+          Kategoriene vises på handlelisten i denne rekkefølgen. Dra for å endre.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
