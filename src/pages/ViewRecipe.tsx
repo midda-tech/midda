@@ -60,6 +60,19 @@ const ViewRecipe = () => {
       if (systemRecipe) {
         setIsSystemRecipe(true);
         setRecipe(systemRecipe);
+        
+        // Check if already saved to household
+        const { data: existing } = await supabase
+          .from("household_recipes")
+          .select("id")
+          .eq("household_id", householdId)
+          .ilike("title", systemRecipe.title)
+          .maybeSingle();
+        
+        if (existing) {
+          setIsAdded(true);
+        }
+        
         setLoading(false);
         return;
       }
