@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Sparkles } from "lucide-react";
+import { Search, Plus, Compass } from "lucide-react";
 import { toast } from "sonner";
 import { Json } from "@/integrations/supabase/types";
 import { getRecipeIcon } from "@/lib/recipeIcons";
@@ -85,7 +85,7 @@ const Recipes = () => {
                 className="gap-2 flex-1 sm:flex-initial" 
                 onClick={() => navigate("/app/oppskrifter/oppdag")}
               >
-                <Sparkles className="h-4 w-4" />
+                <Compass className="h-4 w-4" />
                 Oppdag
               </Button>
               <Button 
