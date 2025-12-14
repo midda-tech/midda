@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Json } from "@/integrations/supabase/types";
@@ -14,7 +13,6 @@ interface RecipeData {
 }
 
 export const useAddRecipeToHousehold = (householdId: string | null, userId: string | null) => {
-  const navigate = useNavigate();
   const [adding, setAdding] = useState(false);
 
   const addToHousehold = async (recipe: RecipeData) => {
@@ -38,7 +36,6 @@ export const useAddRecipeToHousehold = (householdId: string | null, userId: stri
       if (error) throw error;
 
       toast.success(`"${recipe.title}" lagt til i dine oppskrifter`);
-      navigate("/app/oppskrifter");
       return true;
     } catch (error) {
       console.error("Error adding recipe:", error);
