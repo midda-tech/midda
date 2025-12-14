@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/AppHeader";
 import { getRecipeIcon } from "@/lib/recipeIcons";
-import { Pencil, ArrowLeft, Users, Plus } from "lucide-react";
+import { Pencil, ArrowLeft, Users, Plus, Check } from "lucide-react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useAddRecipeToHousehold } from "@/hooks/useAddRecipeToHousehold";
 
@@ -24,6 +24,7 @@ const ViewRecipe = () => {
   const [loading, setLoading] = useState(true);
   const [recipe, setRecipe] = useState<any>(null);
   const [isSystemRecipe, setIsSystemRecipe] = useState(false);
+  const [isAdded, setIsAdded] = useState(false);
 
   useEffect(() => {
     if (authLoading || !householdId) return;
@@ -97,17 +98,27 @@ const ViewRecipe = () => {
             <div className="flex-1" />
             {isSystemRecipe ? (
               <Button
+                variant={isAdded ? "secondary" : "default"}
                 onClick={async () => {
                   const success = await addToHousehold(recipe);
                   if (success) {
-                    navigate("/app/oppskrifter/oppdag");
+                    setIsAdded(true);
                   }
                 }}
-                disabled={adding}
+                disabled={adding || isAdded}
                 className="gap-2"
               >
-                <Plus className="h-4 w-4" />
-                {adding ? "Legger til..." : "Legg til"}
+                {isAdded ? (
+                  <>
+                    <Check className="h-4 w-4" />
+                    Lagret
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-4 w-4" />
+                    {adding ? "Legger til..." : "Legg til"}
+                  </>
+                )}
               </Button>
             ) : (
               <Button
