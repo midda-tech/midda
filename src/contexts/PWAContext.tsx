@@ -5,9 +5,7 @@ import { useRegisterSW } from "virtual:pwa-register/react";
 const UPDATE_CHECK_INTERVAL_MINUTES = 5;
 
 interface PWAContextType {
-  needRefresh: boolean;
   checkForUpdates: () => Promise<void>;
-  updateApp: () => void;
 }
 
 const PWAContext = createContext<PWAContextType | null>(null);
@@ -43,18 +41,8 @@ export function PWAProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateApp = () => {
-    updateServiceWorker(true);
-  };
-
   return (
-    <PWAContext.Provider
-      value={{
-        needRefresh,
-        checkForUpdates,
-        updateApp,
-      }}
-    >
+    <PWAContext.Provider value={{ checkForUpdates }}>
       {children}
     </PWAContext.Provider>
   );
