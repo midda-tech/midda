@@ -73,7 +73,7 @@ const NewRecipeFromImage = () => {
                   Last opp bilder
                 </h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Ta bilde av en oppskrift så leser vi den for deg
+                  Last opp ett eller flere bilder av en oppskrift så leser vi inn oppskriften for deg.
                 </p>
               </div>
 
