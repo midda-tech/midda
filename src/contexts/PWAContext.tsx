@@ -37,11 +37,13 @@ export function PWAProvider({ children }: { children: ReactNode }) {
     if (needRefresh && !showedToast) {
       setShowedToast(true);
       toast("Ny versjon tilgjengelig", {
+        id: "pwa-update", // Prevent duplicate toasts
         description: "Oppdater for å få siste versjon av Midda.",
         duration: Infinity,
         action: {
           label: "Oppdater",
           onClick: () => {
+            toast.dismiss("pwa-update");
             updateServiceWorker(true);
           },
         },
