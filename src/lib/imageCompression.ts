@@ -1,22 +1,7 @@
-const MAX_SIZE_BYTES = 1024 * 1024; // 1MB
 const MAX_DIMENSION = 1500;
 const JPEG_QUALITY = 0.75;
 
-interface CompressionResult {
-  base64: string;
-  mediaType: "image/jpeg" | "image/png" | "image/webp";
-}
-
-export async function compressImage(file: File): Promise<CompressionResult> {
-  const originalMediaType = file.type as CompressionResult["mediaType"];
-  
-  // If file is small enough, return original as base64
-  if (file.size <= MAX_SIZE_BYTES) {
-    const base64 = await fileToBase64(file);
-    return { base64, mediaType: originalMediaType };
-  }
-
-  // Compress the image
+export async function compressImage(file: File): Promise<{ base64: string; mediaType: "image/jpeg" }> {
   const img = await loadImage(file);
   const { width, height } = calculateDimensions(img.width, img.height);
   
@@ -29,24 +14,10 @@ export async function compressImage(file: File): Promise<CompressionResult> {
   
   ctx.drawImage(img, 0, 0, width, height);
   
-  // Convert to JPEG for compression
   const dataUrl = canvas.toDataURL("image/jpeg", JPEG_QUALITY);
   const base64 = dataUrl.split(",")[1];
   
   return { base64, mediaType: "image/jpeg" };
-}
-
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      const base64 = result.split(",")[1];
-      resolve(base64);
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
 }
 
 function loadImage(file: File): Promise<HTMLImageElement> {
