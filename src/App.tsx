@@ -14,6 +14,7 @@ import Discover from "./pages/Discover";
 
 import NewRecipe from "./pages/NewRecipe";
 import NewRecipeFromImage from "./pages/NewRecipeFromImage";
+import NewRecipeFromUrl from "./pages/NewRecipeFromUrl";
 import ViewRecipe from "./pages/ViewRecipe";
 import EditRecipe from "./pages/EditRecipe";
 import ShoppingLists from "./pages/ShoppingLists";
@@ -45,6 +46,7 @@ const App = () => (
             
             <Route path="/app/oppskrifter/ny" element={<NewRecipe />} />
             <Route path="/app/oppskrifter/fra-bilde" element={<NewRecipeFromImage />} />
+            <Route path="/app/oppskrifter/fra-url" element={<NewRecipeFromUrl />} />
             <Route path="/app/oppskrifter/:id" element={<ViewRecipe />} />
             <Route path="/app/oppskrifter/:id/rediger" element={<EditRecipe />} />
             <Route path="/app/handlelister" element={<ShoppingLists />} />
