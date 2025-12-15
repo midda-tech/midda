@@ -175,7 +175,7 @@ export function ImageUploader({
               )}
             </div>
             <p className="font-medium text-foreground text-sm">
-              {images.length > 0 ? "Legg til flere" : "Velg bilde"}
+              Velg bilde
             </p>
           </div>
         </div>
