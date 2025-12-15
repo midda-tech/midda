@@ -140,7 +140,13 @@ export const RecipeForm = ({
           min="1"
           max="50"
           value={formData.servings}
-          onChange={(e) => setFormData(prev => ({ ...prev, servings: parseInt(e.target.value) || 1 }))}
+          onChange={(e) => setFormData(prev => ({ ...prev, servings: e.target.value === "" ? 1 : parseInt(e.target.value) }))}
+          onBlur={(e) => {
+            const value = parseInt(e.target.value);
+            if (isNaN(value) || value < 1) {
+              setFormData(prev => ({ ...prev, servings: 1 }));
+            }
+          }}
           disabled={isSystemRecipe}
         />
       </div>
