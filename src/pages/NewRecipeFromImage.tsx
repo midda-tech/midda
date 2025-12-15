@@ -103,7 +103,7 @@ const NewRecipeFromImage = () => {
                       Leser oppskrift...
                     </>
                   ) : (
-                    `Analyser ${images.length > 0 ? `(${images.length})` : ""}`
+                    `Les inn ${images.length > 0 ? `(${images.length})` : ""}`
                   )}
                 </Button>
               </div>
