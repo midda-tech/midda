@@ -57,7 +57,7 @@ export function NewRecipeDialog({ open, onOpenChange }: NewRecipeDialogProps) {
             <div className="text-left">
               <div className="font-medium">Last opp bilde</div>
               <div className="text-sm text-muted-foreground">
-                La Midda legge inn oppskriften for deg
+                Midda legger inn oppskriften for deg
               </div>
             </div>
           </Button>
