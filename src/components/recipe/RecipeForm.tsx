@@ -46,11 +46,13 @@ export const RecipeForm = ({
   isSubmitting
 }: RecipeFormProps) => {
   const [formData, setFormData] = useState<RecipeFormData>(initialData || defaultFormData);
+  const [servingsInput, setServingsInput] = useState(String(initialData?.servings ?? defaultFormData.servings));
   const { tags: availableTags } = useRecipeTags(householdId);
 
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
+      setServingsInput(String(initialData.servings));
     }
   }, [initialData]);
 
@@ -139,13 +141,13 @@ export const RecipeForm = ({
           type="number"
           min="1"
           max="50"
-          value={formData.servings}
-          onChange={(e) => setFormData(prev => ({ ...prev, servings: e.target.value === "" ? 1 : parseInt(e.target.value) }))}
-          onBlur={(e) => {
-            const value = parseInt(e.target.value);
-            if (isNaN(value) || value < 1) {
-              setFormData(prev => ({ ...prev, servings: 1 }));
-            }
+          value={servingsInput}
+          onChange={(e) => setServingsInput(e.target.value)}
+          onBlur={() => {
+            const value = parseInt(servingsInput);
+            const validValue = isNaN(value) || value < 1 ? 1 : value;
+            setServingsInput(String(validValue));
+            setFormData(prev => ({ ...prev, servings: validValue }));
           }}
           disabled={isSystemRecipe}
         />
