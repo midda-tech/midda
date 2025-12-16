@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,20 +6,66 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
-import { ImageUploader } from "@/components/recipe/ImageUploader";
+import { ImageUploader, ImageFile } from "@/components/recipe/ImageUploader";
 import { compressImage } from "@/lib/imageCompression";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 
-interface ImageFile {
-  file: File;
-  previewUrl: string;
-}
+const MAX_TOTAL_COMPRESSED_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 
 const NewRecipeFromImage = () => {
   const navigate = useNavigate();
   const { loading: authLoading } = useRequireAuth();
   const [images, setImages] = useState<ImageFile[]>([]);
+  const [totalCompressedSize, setTotalCompressedSize] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const handleAddFiles = useCallback(async (files: File[]) => {
+    setIsProcessing(true);
+    
+    try {
+      const newImages: ImageFile[] = [];
+      let additionalSize = 0;
+
+      for (const file of files) {
+        const { base64 } = await compressImage(file);
+        const compressedSize = base64.length;
+
+        if (totalCompressedSize + additionalSize + compressedSize > MAX_TOTAL_COMPRESSED_SIZE_BYTES) {
+          toast.error("Maksimal bildestørrelse nådd (5MB). Fjern et bilde for å legge til flere.", {
+            duration: 5000
+          });
+          break;
+        }
+
+        newImages.push({
+          file,
+          previewUrl: URL.createObjectURL(file),
+          compressedBase64: base64,
+          compressedSize,
+        });
+        additionalSize += compressedSize;
+      }
+
+      if (newImages.length > 0) {
+        setImages(prev => [...prev, ...newImages]);
+        setTotalCompressedSize(prev => prev + additionalSize);
+      }
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [totalCompressedSize]);
+
+  const handleRemoveImage = useCallback((index: number) => {
+    setImages(prev => {
+      const removed = prev[index];
+      if (removed) {
+        URL.revokeObjectURL(removed.previewUrl);
+        setTotalCompressedSize(current => current - (removed.compressedSize || 0));
+      }
+      return prev.filter((_, i) => i !== index);
+    });
+  }, []);
 
   const handleAnalyze = async () => {
     if (images.length === 0) return;
@@ -29,14 +75,13 @@ const NewRecipeFromImage = () => {
     try {
       console.log("[parse-recipe] Starting with", images.length, "image(s)");
 
-      const compressedImages = await Promise.all(
-        images.map(async (img) => {
-          const { base64, mediaType } = await compressImage(img.file);
-          return { base64, media_type: mediaType };
-        })
-      );
+      // Use pre-compressed images
+      const compressedImages = images.map(img => ({
+        base64: img.compressedBase64!,
+        media_type: "image/jpeg" as const,
+      }));
 
-      console.log("[parse-recipe] Compressed images, invoking function...");
+      console.log("[parse-recipe] Using pre-compressed images, invoking function...");
 
       const { data, error } = await supabase.functions.invoke("parse-recipe", {
         body: { images: compressedImages },
@@ -94,8 +139,10 @@ const NewRecipeFromImage = () => {
 
               <ImageUploader
                 images={images}
-                onImagesChange={setImages}
+                onAddFiles={handleAddFiles}
+                onRemoveImage={handleRemoveImage}
                 disabled={isAnalyzing}
+                isProcessing={isProcessing}
               />
 
               <div className="flex gap-3">
@@ -110,7 +157,7 @@ const NewRecipeFromImage = () => {
                 <Button
                   className="flex-1"
                   onClick={handleAnalyze}
-                  disabled={images.length === 0 || isAnalyzing}
+                  disabled={images.length === 0 || isAnalyzing || isProcessing}
                 >
                   {isAnalyzing ? (
                     <>
