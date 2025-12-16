@@ -23,6 +23,8 @@ const NewRecipeFromUrl = () => {
     setIsLoading(true);
 
     try {
+      console.log("[parse-recipe-url] Starting with:", { url: url.trim(), title: title.trim() });
+
       const { data, error } = await supabase.functions.invoke("parse-recipe-url", {
         body: { 
           url: url.trim(),
@@ -30,18 +32,30 @@ const NewRecipeFromUrl = () => {
         },
       });
 
+      console.log("[parse-recipe-url] Response received:", data);
+
       if (error) throw error;
 
       if (!data?.success || !data?.recipe?.id) {
+        console.error("[parse-recipe-url] Invalid response structure:", {
+          hasSuccess: data?.success,
+          hasRecipe: !!data?.recipe,
+          hasRecipeId: data?.recipe?.id,
+          fullResponse: data,
+        });
         throw new Error(data?.error || "Kunne ikke lese oppskriften");
       }
 
       toast.success("Oppskrift lest fra URL!");
       navigate(`/app/oppskrifter/${data.recipe.id}/rediger`);
     } catch (error) {
-      console.error("Error parsing recipe from URL:", error);
+      console.error("[parse-recipe-url] Error:", {
+        error,
+        errorMessage: error instanceof Error ? error.message : "Unknown error",
+      });
       toast.error(
-        error instanceof Error ? error.message : "Kunne ikke lese oppskriften"
+        error instanceof Error ? error.message : "Kunne ikke lese oppskriften",
+        { duration: 10000 }
       );
     } finally {
       setIsLoading(false);
