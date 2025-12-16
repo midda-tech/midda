@@ -16,6 +16,7 @@ interface ImageUploaderProps {
   onRemoveImage: (index: number) => void;
   disabled?: boolean;
   isProcessing?: boolean;
+  limitReached?: boolean;
 }
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -26,6 +27,7 @@ export function ImageUploader({
   onRemoveImage,
   disabled,
   isProcessing,
+  limitReached,
 }: ImageUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -112,7 +114,7 @@ export function ImageUploader({
     }
   };
 
-  const isDisabled = disabled || isProcessing;
+  const isDisabled = disabled || isProcessing || limitReached;
 
   return (
     <div className="space-y-4">
@@ -150,54 +152,63 @@ export function ImageUploader({
         </div>
       )}
 
-      {/* Upload zone */}
-      <div className="grid grid-cols-2 gap-3">
-        <div
-          onClick={isDisabled ? undefined : handleClick}
-          onDrop={isDisabled ? undefined : handleDrop}
-          onDragOver={isDisabled ? undefined : handleDragOver}
-          onDragLeave={isDisabled ? undefined : handleDragLeave}
-          className={cn(
-            "border-2 border-dashed rounded-lg p-6 text-center transition-colors",
-            isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
-            isDragging
-              ? "border-primary bg-primary/5"
-              : "border-muted-foreground/25 hover:border-primary/50"
-          )}
-        >
-          <div className="flex flex-col items-center gap-2">
-            <div className="rounded-full bg-muted p-3">
-              {isProcessing ? (
-                <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
-              ) : images.length > 0 ? (
-                <Plus className="h-6 w-6 text-muted-foreground" />
-              ) : (
-                <ImageIcon className="h-6 w-6 text-muted-foreground" />
-              )}
-            </div>
-            <p className="font-medium text-foreground text-sm">
-              {isProcessing ? "Behandler..." : "Velg bilde"}
-            </p>
-          </div>
-        </div>
+      {/* Limit reached message */}
+      {limitReached && (
+        <p className="text-sm text-muted-foreground text-center">
+          Maks bildestørrelse nådd. Fjern et bilde for å legge til flere.
+        </p>
+      )}
 
-        <div
-          onClick={isDisabled ? undefined : handlePasteFromClipboard}
-          className={cn(
-            "border-2 border-dashed rounded-lg p-6 text-center transition-colors border-muted-foreground/25",
-            isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:border-primary/50"
-          )}
-        >
-          <div className="flex flex-col items-center gap-2">
-            <div className="rounded-full bg-muted p-3">
-              <Clipboard className="h-6 w-6 text-muted-foreground" />
+      {/* Upload zone */}
+      {!limitReached && (
+        <div className="grid grid-cols-2 gap-3">
+          <div
+            onClick={isDisabled ? undefined : handleClick}
+            onDrop={isDisabled ? undefined : handleDrop}
+            onDragOver={isDisabled ? undefined : handleDragOver}
+            onDragLeave={isDisabled ? undefined : handleDragLeave}
+            className={cn(
+              "border-2 border-dashed rounded-lg p-6 text-center transition-colors",
+              isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
+              isDragging
+                ? "border-primary bg-primary/5"
+                : "border-muted-foreground/25 hover:border-primary/50"
+            )}
+          >
+            <div className="flex flex-col items-center gap-2">
+              <div className="rounded-full bg-muted p-3">
+                {isProcessing ? (
+                  <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
+                ) : images.length > 0 ? (
+                  <Plus className="h-6 w-6 text-muted-foreground" />
+                ) : (
+                  <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                )}
+              </div>
+              <p className="font-medium text-foreground text-sm">
+                {isProcessing ? "Behandler..." : "Velg bilde"}
+              </p>
             </div>
-            <p className="font-medium text-foreground text-sm">
-              Lim inn
-            </p>
+          </div>
+
+          <div
+            onClick={isDisabled ? undefined : handlePasteFromClipboard}
+            className={cn(
+              "border-2 border-dashed rounded-lg p-6 text-center transition-colors border-muted-foreground/25",
+              isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:border-primary/50"
+            )}
+          >
+            <div className="flex flex-col items-center gap-2">
+              <div className="rounded-full bg-muted p-3">
+                <Clipboard className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <p className="font-medium text-foreground text-sm">
+                Lim inn
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -20,6 +20,8 @@ const NewRecipeFromImage = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
+  const limitReached = totalCompressedSize >= MAX_TOTAL_COMPRESSED_SIZE_BYTES;
+
   const handleAddFiles = useCallback(async (files: File[]) => {
     setIsProcessing(true);
     
@@ -32,9 +34,6 @@ const NewRecipeFromImage = () => {
         const compressedSize = base64.length;
 
         if (totalCompressedSize + additionalSize + compressedSize > MAX_TOTAL_COMPRESSED_SIZE_BYTES) {
-          toast.error("Maksimal bildestørrelse nådd (5MB). Fjern et bilde for å legge til flere.", {
-            duration: 5000
-          });
           break;
         }
 
@@ -143,6 +142,7 @@ const NewRecipeFromImage = () => {
                 onRemoveImage={handleRemoveImage}
                 disabled={isAnalyzing}
                 isProcessing={isProcessing}
+                limitReached={limitReached}
               />
 
               <div className="flex gap-3">
