@@ -1,55 +1,51 @@
-import { useState, useRef, useEffect, useCallback, DragEvent, ChangeEvent, ClipboardEvent } from "react";
+import { useState, useRef, useEffect, useCallback, DragEvent, ChangeEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { X, ImageIcon, Plus, Clipboard } from "lucide-react";
+import { X, ImageIcon, Plus, Clipboard, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface ImageFile {
+export interface ImageFile {
   file: File;
   previewUrl: string;
+  compressedBase64?: string;
+  compressedSize?: number;
 }
 
 interface ImageUploaderProps {
   images: ImageFile[];
-  onImagesChange: (images: ImageFile[]) => void;
+  onAddFiles: (files: File[]) => Promise<void>;
+  onRemoveImage: (index: number) => void;
   disabled?: boolean;
+  isProcessing?: boolean;
 }
 
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export function ImageUploader({
   images,
-  onImagesChange,
+  onAddFiles,
+  onRemoveImage,
   disabled,
+  isProcessing,
 }: ImageUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const addFiles = useCallback((files: FileList | File[], currentImages: ImageFile[]) => {
-    const newImages: ImageFile[] = [];
+  const processFiles = useCallback(async (files: FileList | File[]) => {
+    const validFiles: File[] = [];
     for (const file of files) {
       if (ACCEPTED_TYPES.includes(file.type)) {
-        newImages.push({ file, previewUrl: URL.createObjectURL(file) });
+        validFiles.push(file);
       }
     }
-    if (newImages.length > 0) {
-      onImagesChange([...currentImages, ...newImages]);
+    if (validFiles.length > 0) {
+      await onAddFiles(validFiles);
     }
-  }, [onImagesChange]);
+  }, [onAddFiles]);
 
-  const removeImage = (index: number) => {
-    const updated = [...images];
-    URL.revokeObjectURL(updated[index].previewUrl);
-    updated.splice(index, 1);
-    onImagesChange(updated);
-  };
-
-  // Global paste listener - use ref for current images to avoid stale closure
-  const imagesRef = useRef(images);
-  imagesRef.current = images;
-
+  // Global paste listener
   useEffect(() => {
-    const handlePaste = (e: globalThis.ClipboardEvent) => {
-      if (disabled) return;
+    const handlePaste = async (e: globalThis.ClipboardEvent) => {
+      if (disabled || isProcessing) return;
       
       const items = e.clipboardData?.items;
       if (!items) return;
@@ -61,17 +57,17 @@ export function ImageUploader({
           if (file) files.push(file);
         }
       }
-      if (files.length > 0) addFiles(files, imagesRef.current);
+      if (files.length > 0) await processFiles(files);
     };
 
     document.addEventListener("paste", handlePaste);
     return () => document.removeEventListener("paste", handlePaste);
-  }, [disabled, addFiles]);
+  }, [disabled, isProcessing, processFiles]);
 
-  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+  const handleDrop = async (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
-    addFiles(e.dataTransfer.files, images);
+    await processFiles(e.dataTransfer.files);
   };
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
@@ -83,9 +79,9 @@ export function ImageUploader({
     setIsDragging(false);
   };
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleChange = async (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      addFiles(e.target.files, images);
+      await processFiles(e.target.files);
       e.target.value = "";
     }
   };
@@ -95,7 +91,7 @@ export function ImageUploader({
   };
 
   const handlePasteFromClipboard = async () => {
-    if (disabled) return;
+    if (disabled || isProcessing) return;
     try {
       const clipboardItems = await navigator.clipboard.read();
       const files: File[] = [];
@@ -109,12 +105,14 @@ export function ImageUploader({
         }
       }
       if (files.length > 0) {
-        addFiles(files, images);
+        await processFiles(files);
       }
     } catch {
       // Clipboard API not available or permission denied - silently fail
     }
   };
+
+  const isDisabled = disabled || isProcessing;
 
   return (
     <div className="space-y-4">
@@ -124,7 +122,7 @@ export function ImageUploader({
         accept={ACCEPTED_TYPES.join(",")}
         onChange={handleChange}
         className="hidden"
-        disabled={disabled}
+        disabled={isDisabled}
         multiple
       />
 
@@ -142,8 +140,8 @@ export function ImageUploader({
                 variant="secondary"
                 size="icon"
                 className="absolute top-1.5 right-1.5 h-7 w-7"
-                onClick={() => removeImage(index)}
-                disabled={disabled}
+                onClick={() => onRemoveImage(index)}
+                disabled={isDisabled}
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -155,12 +153,13 @@ export function ImageUploader({
       {/* Upload zone */}
       <div className="grid grid-cols-2 gap-3">
         <div
-          onClick={handleClick}
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
+          onClick={isDisabled ? undefined : handleClick}
+          onDrop={isDisabled ? undefined : handleDrop}
+          onDragOver={isDisabled ? undefined : handleDragOver}
+          onDragLeave={isDisabled ? undefined : handleDragLeave}
           className={cn(
-            "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
+            "border-2 border-dashed rounded-lg p-6 text-center transition-colors",
+            isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
             isDragging
               ? "border-primary bg-primary/5"
               : "border-muted-foreground/25 hover:border-primary/50"
@@ -168,21 +167,26 @@ export function ImageUploader({
         >
           <div className="flex flex-col items-center gap-2">
             <div className="rounded-full bg-muted p-3">
-              {images.length > 0 ? (
+              {isProcessing ? (
+                <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
+              ) : images.length > 0 ? (
                 <Plus className="h-6 w-6 text-muted-foreground" />
               ) : (
                 <ImageIcon className="h-6 w-6 text-muted-foreground" />
               )}
             </div>
             <p className="font-medium text-foreground text-sm">
-              Velg bilde
+              {isProcessing ? "Behandler..." : "Velg bilde"}
             </p>
           </div>
         </div>
 
         <div
-          onClick={handlePasteFromClipboard}
-          className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors border-muted-foreground/25 hover:border-primary/50"
+          onClick={isDisabled ? undefined : handlePasteFromClipboard}
+          className={cn(
+            "border-2 border-dashed rounded-lg p-6 text-center transition-colors border-muted-foreground/25",
+            isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:border-primary/50"
+          )}
         >
           <div className="flex flex-col items-center gap-2">
             <div className="rounded-full bg-muted p-3">
