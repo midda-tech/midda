@@ -46,18 +46,17 @@ const NewRecipeFromImage = () => {
 
       if (error) throw error;
 
-      if (!data?.success || !data?.recipe?.id) {
+      if (!data?.success || !data?.recipe) {
         console.error("[parse-recipe] Invalid response structure:", {
           hasSuccess: data?.success,
           hasRecipe: !!data?.recipe,
-          hasRecipeId: data?.recipe?.id,
           fullResponse: data,
         });
         throw new Error(data?.error || "Kunne ikke lese oppskriften");
       }
 
       toast.success("Oppskrift lest fra bilde!");
-      navigate(`/app/oppskrifter/${data.recipe.id}/rediger`);
+      navigate("/app/oppskrifter/ny", { state: { parsedRecipe: data.recipe } });
     } catch (error) {
       console.error("[parse-recipe] Error:", {
         error,
