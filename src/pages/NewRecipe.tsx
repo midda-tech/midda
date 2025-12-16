@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/AppHeader";
 import { RecipeForm, RecipeFormData } from "@/components/recipe/RecipeForm";
 import { z } from "zod";
+import { DEFAULT_ICON } from "@/lib/recipeIcons";
 
 const recipeSchema = z.object({
   title: z.string().trim().min(1, "Tittel er påkrevd").max(100, "Tittel må være mindre enn 100 tegn"),
@@ -16,8 +17,26 @@ const recipeSchema = z.object({
   tags: z.array(z.string().trim().min(1))
 });
 
+const transformParsedRecipe = (recipe: any): RecipeFormData => ({
+  title: recipe.title || "",
+  servings: recipe.servings || 2,
+  icon: DEFAULT_ICON,
+  ingredients: Array.isArray(recipe.ingredients) ? recipe.ingredients : [""],
+  instructions: Array.isArray(recipe.instructions)
+    ? recipe.instructions.map((inst: any) => 
+        typeof inst === "string" ? inst : inst.instruction || ""
+      )
+    : [""],
+  tags: Array.isArray(recipe.tags)
+    ? recipe.tags.map((t: string) => t.toLowerCase())
+    : [],
+});
+
 const NewRecipe = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const parsedRecipe = location.state?.parsedRecipe;
+  
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [householdId, setHouseholdId] = useState<string | null>(null);
@@ -118,11 +137,12 @@ const NewRecipe = () => {
           <Card>
             <CardContent className="p-6 sm:p-8 space-y-8">
               <h2 className="font-serif text-3xl font-bold text-foreground">
-                Legg til ny oppskrift
+                {parsedRecipe ? "Se over oppskrift" : "Legg til ny oppskrift"}
               </h2>
 
               <RecipeForm
                 householdId={householdId}
+                initialData={parsedRecipe ? transformParsedRecipe(parsedRecipe) : undefined}
                 onSubmit={handleSubmit}
                 onCancel={() => navigate("/app/oppskrifter")}
                 submitLabel="Lagre oppskrift"
