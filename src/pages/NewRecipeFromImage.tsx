@@ -7,64 +7,64 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { ImageUploader, ImageFile } from "@/components/recipe/ImageUploader";
-import { compressImage } from "@/lib/imageCompression";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 
-const MAX_TOTAL_COMPRESSED_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+const MAX_TOTAL_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 
 const NewRecipeFromImage = () => {
   const navigate = useNavigate();
   const { loading: authLoading } = useRequireAuth();
   const [images, setImages] = useState<ImageFile[]>([]);
-  const [totalCompressedSize, setTotalCompressedSize] = useState(0);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [totalSize, setTotalSize] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const limitReached = totalCompressedSize >= MAX_TOTAL_COMPRESSED_SIZE_BYTES;
+  const limitReached = totalSize >= MAX_TOTAL_SIZE_BYTES;
 
   const handleAddFiles = useCallback(async (files: File[]) => {
-    setIsProcessing(true);
-    
-    try {
-      const newImages: ImageFile[] = [];
-      let additionalSize = 0;
+    const newImages: ImageFile[] = [];
+    let additionalSize = 0;
 
-      for (const file of files) {
-        const { base64 } = await compressImage(file);
-        const compressedSize = base64.length;
-
-        if (totalCompressedSize + additionalSize + compressedSize > MAX_TOTAL_COMPRESSED_SIZE_BYTES) {
-          break;
-        }
-
-        newImages.push({
-          file,
-          previewUrl: URL.createObjectURL(file),
-          compressedBase64: base64,
-          compressedSize,
-        });
-        additionalSize += compressedSize;
+    for (const file of files) {
+      if (totalSize + additionalSize + file.size > MAX_TOTAL_SIZE_BYTES) {
+        break;
       }
 
-      if (newImages.length > 0) {
-        setImages(prev => [...prev, ...newImages]);
-        setTotalCompressedSize(prev => prev + additionalSize);
-      }
-    } finally {
-      setIsProcessing(false);
+      newImages.push({
+        file,
+        previewUrl: URL.createObjectURL(file),
+      });
+      additionalSize += file.size;
     }
-  }, [totalCompressedSize]);
+
+    if (newImages.length > 0) {
+      setImages(prev => [...prev, ...newImages]);
+      setTotalSize(prev => prev + additionalSize);
+    }
+  }, [totalSize]);
 
   const handleRemoveImage = useCallback((index: number) => {
     setImages(prev => {
       const removed = prev[index];
       if (removed) {
         URL.revokeObjectURL(removed.previewUrl);
-        setTotalCompressedSize(current => current - (removed.compressedSize || 0));
+        setTotalSize(current => current - removed.file.size);
       }
       return prev.filter((_, i) => i !== index);
     });
   }, []);
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        const base64 = result.split(",")[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
 
   const handleAnalyze = async () => {
     if (images.length === 0) return;
@@ -74,16 +74,17 @@ const NewRecipeFromImage = () => {
     try {
       console.log("[parse-recipe] Starting with", images.length, "image(s)");
 
-      // Use pre-compressed images
-      const compressedImages = images.map(img => ({
-        base64: img.compressedBase64!,
-        media_type: "image/jpeg" as const,
-      }));
+      const imageData = await Promise.all(
+        images.map(async (img) => ({
+          base64: await fileToBase64(img.file),
+          media_type: img.file.type as "image/jpeg" | "image/png" | "image/webp",
+        }))
+      );
 
-      console.log("[parse-recipe] Using pre-compressed images, invoking function...");
+      console.log("[parse-recipe] Invoking function...");
 
       const { data, error } = await supabase.functions.invoke("parse-recipe", {
-        body: { images: compressedImages },
+        body: { images: imageData },
       });
 
       console.log("[parse-recipe] Response received:", data);
@@ -141,7 +142,6 @@ const NewRecipeFromImage = () => {
                 onAddFiles={handleAddFiles}
                 onRemoveImage={handleRemoveImage}
                 disabled={isAnalyzing}
-                isProcessing={isProcessing}
                 limitReached={limitReached}
               />
 
@@ -157,7 +157,7 @@ const NewRecipeFromImage = () => {
                 <Button
                   className="flex-1"
                   onClick={handleAnalyze}
-                  disabled={images.length === 0 || isAnalyzing || isProcessing}
+                  disabled={images.length === 0 || isAnalyzing}
                 >
                   {isAnalyzing ? (
                     <>
