@@ -45,13 +45,22 @@ export const RecipeForm = ({
   submitLabel,
   isSubmitting
 }: RecipeFormProps) => {
-  const [formData, setFormData] = useState<RecipeFormData>(initialData || defaultFormData);
+  const [formData, setFormData] = useState<RecipeFormData>(() => {
+    if (!initialData) return defaultFormData;
+    return {
+      ...initialData,
+      icon: initialData.icon || DEFAULT_ICON,
+    };
+  });
   const [servingsInput, setServingsInput] = useState(String(initialData?.servings ?? defaultFormData.servings));
   const { tags: availableTags } = useRecipeTags(householdId);
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      setFormData({
+        ...initialData,
+        icon: initialData.icon || DEFAULT_ICON,
+      });
       setServingsInput(String(initialData.servings));
     }
   }, [initialData]);
