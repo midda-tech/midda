@@ -111,13 +111,14 @@ const NewRecipe = () => {
 
       toast.success("Oppskrift lagret!");
       navigate("/app/oppskrifter");
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         const firstError = error.errors[0];
         toast.error(firstError.message);
       } else {
         console.error("Error saving recipe:", error);
-        toast.error("Kunne ikke lagre oppskrift");
+        const errorMessage = error?.message || error?.code || "Ukjent feil";
+        toast.error(`Kunne ikke lagre oppskrift: ${errorMessage}`);
       }
     } finally {
       setSaving(false);
