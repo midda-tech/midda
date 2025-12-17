@@ -76,7 +76,12 @@ const ViewShoppingList = () => {
         return;
       }
 
-      setShoppingList(data as unknown as ShoppingList);
+      const listData = data as unknown as ShoppingList;
+      setShoppingList(listData);
+      
+      // Load checked items from database
+      const savedCheckedItems = listData.shopping_list?.checked_items || [];
+      setCheckedItems(new Set(savedCheckedItems));
     } catch (error) {
       console.error("Error fetching shopping list:", error);
       toast.error("Kunne ikke laste handleliste");
@@ -84,16 +89,31 @@ const ViewShoppingList = () => {
     }
   };
 
-  const toggleItem = (item: string) => {
-    setCheckedItems(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(item)) {
-        newSet.delete(item);
-      } else {
-        newSet.add(item);
-      }
-      return newSet;
-    });
+  const toggleItem = async (item: string) => {
+    const newSet = new Set(checkedItems);
+    if (newSet.has(item)) {
+      newSet.delete(item);
+    } else {
+      newSet.add(item);
+    }
+    setCheckedItems(newSet);
+    
+    // Persist to database
+    try {
+      const { error } = await supabase
+        .from("shopping_lists")
+        .update({
+          shopping_list: {
+            categories: shoppingList?.shopping_list?.categories || [],
+            checked_items: Array.from(newSet)
+          } as any
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error saving checked state:", error);
+    }
   };
 
   const updateShoppingListInDB = async (updatedCategories: ShoppingListCategory[]) => {
@@ -101,7 +121,10 @@ const ViewShoppingList = () => {
       const { error } = await supabase
         .from("shopping_lists")
         .update({
-          shopping_list: { categories: updatedCategories } as any
+          shopping_list: { 
+            categories: updatedCategories,
+            checked_items: Array.from(checkedItems)
+          } as any
         })
         .eq("id", id);
 
