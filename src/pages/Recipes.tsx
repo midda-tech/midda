@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Compass } from "lucide-react";
 import { toast } from "sonner";
 import { Json } from "@/integrations/supabase/types";
@@ -12,6 +11,8 @@ import { getRecipeIcon } from "@/lib/recipeIcons";
 import { AppHeader } from "@/components/AppHeader";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { NewRecipeDialog } from "@/components/recipe/NewRecipeDialog";
+
+const SCROLL_KEY = "recipes-scroll-position";
 
 interface Recipe {
   id: string;
@@ -30,6 +31,26 @@ const Recipes = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [dataLoading, setDataLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  
+
+  // Save scroll position before navigating away
+  useEffect(() => {
+    const handleScroll = () => {
+      sessionStorage.setItem(SCROLL_KEY, String(window.scrollY));
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Restore scroll position after data loads
+  useEffect(() => {
+    if (!dataLoading && recipes.length > 0) {
+      const savedPosition = sessionStorage.getItem(SCROLL_KEY);
+      if (savedPosition) {
+        window.scrollTo(0, parseInt(savedPosition, 10));
+      }
+    }
+  }, [dataLoading, recipes.length]);
 
   useEffect(() => {
     if (authLoading || !householdId) return;
@@ -109,42 +130,18 @@ const Recipes = () => {
             />
           </div>
 
-          <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex flex-col gap-2">
             {filteredRecipes.map((recipe) => (
-                <Card 
-                  key={recipe.id} 
-                  className="hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => navigate(`/app/oppskrifter/${recipe.id}`)}
-                >
-                <CardHeader className="text-center space-y-4 pb-4">
-                  <div className="flex justify-center">
-                    <img src={getRecipeIcon(recipe.icon)} alt="" className="h-16 w-16" />
-                  </div>
-                  <CardTitle className="text-xl font-serif text-foreground">
+              <Card 
+                key={recipe.id} 
+                className="hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => navigate(`/app/oppskrifter/${recipe.id}`)}
+              >
+                <CardContent className="flex items-center gap-3 p-3">
+                  <img src={getRecipeIcon(recipe.icon)} alt="" className="h-10 w-10 shrink-0" />
+                  <span className="font-serif text-base font-medium text-foreground truncate">
                     {recipe.title}
-                  </CardTitle>
-                  {recipe.tags && Array.isArray(recipe.tags) && recipe.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 justify-center">
-                      {recipe.tags.slice(0, 3).map((tag: string, idx: number) => (
-                        <Badge key={idx} variant="secondary" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
-                    <span>{recipe.servings} personer</span>
-                    <span>•</span>
-                    <span>
-                      {Array.isArray(recipe.ingredients) ? recipe.ingredients.length : 0} ingredienser
-                    </span>
-                    <span>•</span>
-                    <span>
-                      {Array.isArray(recipe.instructions) ? recipe.instructions.length : 0} steg
-                    </span>
-                  </div>
+                  </span>
                 </CardContent>
               </Card>
             ))}
