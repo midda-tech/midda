@@ -6,8 +6,6 @@ import { cn } from "@/lib/utils";
 export interface ImageFile {
   file: File;
   previewUrl: string;
-  compressedBase64?: string;
-  compressedSize?: number;
 }
 
 interface ImageUploaderProps {
