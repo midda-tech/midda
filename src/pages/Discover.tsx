@@ -1,11 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, ArrowLeft, Plus, Check } from "lucide-react";
+import { Search, ArrowLeft, Plus, Check, SlidersHorizontal, X } from "lucide-react";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 import { toast } from "sonner";
 import { Json } from "@/integrations/supabase/types";
 import { getRecipeIcon } from "@/lib/recipeIcons";
@@ -30,8 +37,21 @@ const Discover = () => {
   const [systemRecipes, setSystemRecipes] = useState<SystemRecipe[]>([]);
   const [savedRecipeIds, setSavedRecipeIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [filterOpen, setFilterOpen] = useState(false);
+
+  // Get all unique tags from recipes
+  const allTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    systemRecipes.forEach(recipe => {
+      if (recipe.tags && Array.isArray(recipe.tags)) {
+        recipe.tags.forEach((tag: string) => tagSet.add(tag));
+      }
+    });
+    return Array.from(tagSet).sort();
+  }, [systemRecipes]);
 
   useEffect(() => {
     if (authLoading || !householdId) return;
@@ -84,9 +104,25 @@ const Discover = () => {
     setSavingId(null);
   };
 
-  const filteredRecipes = systemRecipes.filter(recipe =>
-    recipe.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag) 
+        ? prev.filter(t => t !== tag) 
+        : [...prev, tag]
+    );
+  };
+
+  const clearFilters = () => {
+    setSelectedTags([]);
+  };
+
+  const filteredRecipes = systemRecipes.filter(recipe => {
+    const matchesSearch = recipe.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesTags = selectedTags.length === 0 || 
+      (recipe.tags && Array.isArray(recipe.tags) && 
+        selectedTags.every(tag => (recipe.tags as string[]).includes(tag)));
+    return matchesSearch && matchesTags;
+  });
 
   if (authLoading || dataLoading) {
     return null;
@@ -113,65 +149,97 @@ const Discover = () => {
                 Oppdag
               </h2>
               <p className="text-muted-foreground text-sm mt-1">
-                Utforsk oppskrifter og legg til favorittene dine
+                {filteredRecipes.length} oppskrifter
               </p>
             </div>
           </div>
 
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Søk etter oppskrifter..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Søk etter oppskrifter..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Drawer open={filterOpen} onOpenChange={setFilterOpen}>
+              <DrawerTrigger asChild>
+                <Button variant="outline" size="icon" className="relative shrink-0">
+                  <SlidersHorizontal className="h-4 w-4" />
+                  {selectedTags.length > 0 && (
+                    <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center">
+                      {selectedTags.length}
+                    </span>
+                  )}
+                </Button>
+              </DrawerTrigger>
+              <DrawerContent>
+                <DrawerHeader className="flex flex-row items-center justify-between">
+                  <DrawerTitle>Filtrer etter tagger</DrawerTitle>
+                  {selectedTags.length > 0 && (
+                    <Button variant="ghost" size="sm" onClick={clearFilters}>
+                      <X className="h-4 w-4 mr-1" />
+                      Nullstill
+                    </Button>
+                  )}
+                </DrawerHeader>
+                <div className="px-4 pb-6">
+                  {allTags.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {allTags.map((tag) => (
+                        <Badge
+                          key={tag}
+                          variant={selectedTags.includes(tag) ? "default" : "outline"}
+                          className="cursor-pointer text-sm px-3 py-1"
+                          onClick={() => toggleTag(tag)}
+                        >
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-sm">
+                      Ingen tagger funnet
+                    </p>
+                  )}
+                </div>
+              </DrawerContent>
+            </Drawer>
           </div>
 
-          <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex flex-col gap-2">
             {filteredRecipes.map((recipe) => {
               const isSaved = savedRecipeIds.has(recipe.id);
               const isSaving = savingId === recipe.id;
               
               return (
-              <Card 
+                <Card 
                   key={recipe.id} 
-                  className="hover:shadow-md transition-shadow cursor-pointer relative"
+                  className="hover:shadow-md transition-shadow cursor-pointer"
                   onClick={() => navigate(`/app/oppskrifter/${recipe.id}`)}
                 >
-                  <CardHeader className="text-center space-y-4 pb-4">
-                    <div className="flex justify-center">
-                      <img src={getRecipeIcon(recipe.icon)} alt="" className="h-16 w-16" />
-                    </div>
-                    <CardTitle className="text-xl font-serif text-foreground">
-                      {recipe.title}
-                    </CardTitle>
-                    {recipe.tags && Array.isArray(recipe.tags) && recipe.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 justify-center">
-                        {recipe.tags.slice(0, 3).map((tag: string, idx: number) => (
-                          <Badge key={idx} variant="secondary" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground mb-4">
-                      <span>{recipe.servings} personer</span>
-                      <span>•</span>
-                      <span>
-                        {Array.isArray(recipe.ingredients) ? recipe.ingredients.length : 0} ingredienser
+                  <CardContent className="flex items-center gap-3 p-3">
+                    <img src={getRecipeIcon(recipe.icon)} alt="" className="h-10 w-10 shrink-0" />
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="font-serif text-base font-bold text-foreground truncate">
+                        {recipe.title}
                       </span>
-                      <span>•</span>
-                      <span>
-                        {Array.isArray(recipe.instructions) ? recipe.instructions.length : 0} steg
-                      </span>
+                      {recipe.tags && Array.isArray(recipe.tags) && recipe.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {recipe.tags.slice(0, 3).map((tag: string, idx: number) => (
+                            <Badge key={idx} variant="secondary" className="text-xs px-1.5 py-0">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <Button
                       variant={isSaved ? "secondary" : "default"}
                       size="sm"
-                      className="w-full gap-2"
+                      className="shrink-0 gap-1"
                       onClick={(e) => handleSaveRecipe(recipe, e)}
                       disabled={isSaved || isSaving}
                     >
@@ -183,7 +251,7 @@ const Discover = () => {
                       ) : (
                         <>
                           <Plus className="h-4 w-4" />
-                          {isSaving ? "Lagrer..." : "Legg til"}
+                          {isSaving ? "..." : "Legg til"}
                         </>
                       )}
                     </Button>
