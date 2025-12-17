@@ -297,13 +297,21 @@ const ViewShoppingList = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {category.items.map((item, itemIdx) => {
-                    const isEditing = editingItem?.categoryIdx === idx && editingItem?.itemIdx === itemIdx;
+                  {[...category.items]
+                    .map((item, originalIdx) => ({ item, originalIdx }))
+                    .sort((a, b) => {
+                      const aChecked = checkedItems.has(a.item);
+                      const bChecked = checkedItems.has(b.item);
+                      if (aChecked === bChecked) return 0;
+                      return aChecked ? 1 : -1;
+                    })
+                    .map(({ item, originalIdx }) => {
+                    const isEditing = editingItem?.categoryIdx === idx && editingItem?.itemIdx === originalIdx;
                     
                     return (
-                      <div key={itemIdx} className="flex items-center gap-2">
+                      <div key={originalIdx} className="flex items-center gap-2">
                         <Checkbox
-                          id={`${idx}-${itemIdx}`}
+                          id={`${idx}-${originalIdx}`}
                           checked={checkedItems.has(item)}
                           onCheckedChange={() => toggleItem(item)}
                           disabled={isEditing}
@@ -349,7 +357,7 @@ const ViewShoppingList = () => {
                         ) : (
                           <>
                             <label
-                              htmlFor={`${idx}-${itemIdx}`}
+                              htmlFor={`${idx}-${originalIdx}`}
                               className={`flex-1 text-sm cursor-pointer ${
                                 checkedItems.has(item)
                                   ? 'line-through text-muted-foreground'
@@ -363,7 +371,7 @@ const ViewShoppingList = () => {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 shrink-0"
-                              onClick={() => startEditing(idx, itemIdx, item)}
+                              onClick={() => startEditing(idx, originalIdx, item)}
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
@@ -372,7 +380,7 @@ const ViewShoppingList = () => {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => deleteItem(idx, itemIdx)}
+                              onClick={() => deleteItem(idx, originalIdx)}
                             >
                               <X className="h-4 w-4" />
                             </Button>
