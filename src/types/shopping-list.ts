@@ -5,6 +5,7 @@ export interface ShoppingListCategory {
 
 export interface ShoppingListData {
   categories: ShoppingListCategory[];
+  checked_items?: string[];
 }
 
 export interface ShoppingList {
