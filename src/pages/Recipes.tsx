@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Compass } from "lucide-react";
 import { toast } from "sonner";
 import { Json } from "@/integrations/supabase/types";
@@ -137,11 +138,22 @@ const Recipes = () => {
                 className="hover:shadow-md transition-shadow cursor-pointer"
                 onClick={() => navigate(`/app/oppskrifter/${recipe.id}`)}
               >
-                <CardContent className="flex items-center gap-3 p-3">
+                <CardContent className="flex items-start gap-3 p-3">
                   <img src={getRecipeIcon(recipe.icon)} alt="" className="h-10 w-10 shrink-0" />
-                  <span className="font-serif text-base font-medium text-foreground truncate">
-                    {recipe.title}
-                  </span>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-serif text-base font-bold text-foreground truncate">
+                      {recipe.title}
+                    </span>
+                    {recipe.tags && Array.isArray(recipe.tags) && recipe.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {recipe.tags.slice(0, 3).map((tag: string, idx: number) => (
+                          <Badge key={idx} variant="secondary" className="text-xs px-1.5 py-0">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             ))}
