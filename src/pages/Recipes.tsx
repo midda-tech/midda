@@ -218,13 +218,13 @@ const Recipes = () => {
                 className="hover:shadow-md transition-shadow cursor-pointer"
                 onClick={() => navigate(`/app/oppskrifter/${recipe.id}`)}
               >
-                <CardContent className="p-4">
+                <CardContent className="p-4 flex flex-col items-center text-center">
                   <img src={getRecipeIcon(recipe.icon)} alt="" className="h-12 w-12 mb-2" />
-                  <span className="font-serif text-lg font-bold text-foreground block">
+                  <span className="font-serif text-lg font-bold text-foreground">
                     {recipe.title}
                   </span>
                   {recipe.tags && Array.isArray(recipe.tags) && recipe.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-2">
+                    <div className="flex flex-wrap justify-center gap-1 mt-2">
                       {recipe.tags.slice(0, 3).map((tag: string, idx: number) => (
                         <Badge key={idx} variant="secondary" className="text-xs px-1.5 py-0">
                           {tag}
