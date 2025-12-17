@@ -1,11 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Compass } from "lucide-react";
+import { Search, Plus, Compass, SlidersHorizontal, X } from "lucide-react";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 import { toast } from "sonner";
 import { Json } from "@/integrations/supabase/types";
 import { getRecipeIcon } from "@/lib/recipeIcons";
@@ -30,9 +37,21 @@ const Recipes = () => {
   const { loading: authLoading, householdId } = useRequireAuth();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  
+  const [filterOpen, setFilterOpen] = useState(false);
+
+  // Get all unique tags from recipes
+  const allTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    recipes.forEach(recipe => {
+      if (recipe.tags && Array.isArray(recipe.tags)) {
+        recipe.tags.forEach((tag: string) => tagSet.add(tag));
+      }
+    });
+    return Array.from(tagSet).sort();
+  }, [recipes]);
 
   // Save scroll position before navigating away
   useEffect(() => {
@@ -77,9 +96,25 @@ const Recipes = () => {
     }
   };
 
-  const filteredRecipes = recipes.filter(recipe =>
-    recipe.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tag) 
+        ? prev.filter(t => t !== tag) 
+        : [...prev, tag]
+    );
+  };
+
+  const clearFilters = () => {
+    setSelectedTags([]);
+  };
+
+  const filteredRecipes = recipes.filter(recipe => {
+    const matchesSearch = recipe.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesTags = selectedTags.length === 0 || 
+      (recipe.tags && Array.isArray(recipe.tags) && 
+        selectedTags.every(tag => (recipe.tags as string[]).includes(tag)));
+    return matchesSearch && matchesTags;
+  });
 
   if (authLoading || dataLoading) {
     return null;
@@ -121,14 +156,59 @@ const Recipes = () => {
             </div>
           </div>
 
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Søk etter oppskrifter..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Søk etter oppskrifter..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Drawer open={filterOpen} onOpenChange={setFilterOpen}>
+              <DrawerTrigger asChild>
+                <Button variant="outline" size="icon" className="relative shrink-0">
+                  <SlidersHorizontal className="h-4 w-4" />
+                  {selectedTags.length > 0 && (
+                    <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center">
+                      {selectedTags.length}
+                    </span>
+                  )}
+                </Button>
+              </DrawerTrigger>
+              <DrawerContent>
+                <DrawerHeader className="flex flex-row items-center justify-between">
+                  <DrawerTitle>Filtrer etter tagger</DrawerTitle>
+                  {selectedTags.length > 0 && (
+                    <Button variant="ghost" size="sm" onClick={clearFilters}>
+                      <X className="h-4 w-4 mr-1" />
+                      Nullstill
+                    </Button>
+                  )}
+                </DrawerHeader>
+                <div className="px-4 pb-6">
+                  {allTags.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {allTags.map((tag) => (
+                        <Badge
+                          key={tag}
+                          variant={selectedTags.includes(tag) ? "default" : "outline"}
+                          className="cursor-pointer text-sm px-3 py-1"
+                          onClick={() => toggleTag(tag)}
+                        >
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-sm">
+                      Ingen tagger funnet
+                    </p>
+                  )}
+                </div>
+              </DrawerContent>
+            </Drawer>
           </div>
 
           <div className="flex flex-col gap-2">
