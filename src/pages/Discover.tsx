@@ -209,7 +209,7 @@ const Discover = () => {
             </Drawer>
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             {filteredRecipes.map((recipe) => {
               const isSaved = savedRecipeIds.has(recipe.id);
               const isSaving = savingId === recipe.id;
@@ -220,26 +220,24 @@ const Discover = () => {
                   className="hover:shadow-md transition-shadow cursor-pointer"
                   onClick={() => navigate(`/app/oppskrifter/${recipe.id}`)}
                 >
-                  <CardContent className="flex items-center gap-3 p-3">
-                    <img src={getRecipeIcon(recipe.icon)} alt="" className="h-10 w-10 shrink-0" />
-                    <div className="flex flex-col min-w-0 flex-1">
-                      <span className="font-serif text-base font-bold text-foreground truncate">
-                        {recipe.title}
-                      </span>
-                      {recipe.tags && Array.isArray(recipe.tags) && recipe.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {recipe.tags.slice(0, 3).map((tag: string, idx: number) => (
-                            <Badge key={idx} variant="secondary" className="text-xs px-1.5 py-0">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                  <CardContent className="p-4 flex flex-col items-center text-center">
+                    <img src={getRecipeIcon(recipe.icon)} alt="" className="h-12 w-12 mb-2" />
+                    <span className="font-serif text-lg font-bold text-foreground">
+                      {recipe.title}
+                    </span>
+                    {recipe.tags && Array.isArray(recipe.tags) && recipe.tags.length > 0 && (
+                      <div className="flex flex-wrap justify-center gap-1 mt-2">
+                        {recipe.tags.slice(0, 3).map((tag: string, idx: number) => (
+                          <Badge key={idx} variant="secondary" className="text-xs px-1.5 py-0">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                     <Button
                       variant={isSaved ? "secondary" : "default"}
                       size="sm"
-                      className="shrink-0 gap-1"
+                      className="mt-3 gap-1"
                       onClick={(e) => handleSaveRecipe(recipe, e)}
                       disabled={isSaved || isSaving}
                     >
