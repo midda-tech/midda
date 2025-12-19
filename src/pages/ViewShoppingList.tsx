@@ -95,6 +95,7 @@ const ViewShoppingList = () => {
   };
 
   const toggleItem = async (item: string) => {
+    // Optimistic update
     const newSet = new Set(checkedItems);
     if (newSet.has(item)) {
       newSet.delete(item);
@@ -103,21 +104,24 @@ const ViewShoppingList = () => {
     }
     setCheckedItems(newSet);
     
-    // Persist to database
     try {
-      const { error } = await supabase
-        .from("shopping_lists")
-        .update({
-          shopping_list: {
-            categories: shoppingList?.shopping_list?.categories || [],
-            checked_items: Array.from(newSet)
-          } as any
-        })
-        .eq("id", id);
+      const { data, error } = await supabase.rpc('toggle_shopping_list_item', {
+        p_list_id: id,
+        p_item: item
+      });
 
       if (error) throw error;
+      
+      // Sync state with server response
+      if (data) {
+        const shoppingListData = data as { checked_items?: string[] };
+        const serverCheckedItems = shoppingListData.checked_items || [];
+        setCheckedItems(new Set(serverCheckedItems));
+      }
     } catch (error) {
-      console.error("Error saving checked state:", error);
+      console.error("Error toggling item:", error);
+      // Revert optimistic update on error
+      setCheckedItems(checkedItems);
     }
   };
 
