@@ -293,6 +293,14 @@ export type Database = {
         Args: { p_invite_code: string }
         Returns: Json
       }
+      toggle_shopping_list_item: {
+        Args: { p_item: string; p_list_id: string }
+        Returns: Json
+      }
+      toggle_shopping_list_item_by_token: {
+        Args: { p_item: string; p_token: string }
+        Returns: Json
+      }
       update_shopping_list_by_token: {
         Args: { p_shopping_list: Json; p_token: string }
         Returns: boolean

@@ -86,6 +86,7 @@ const SharedShoppingList = () => {
   };
 
   const toggleItem = async (item: string) => {
+    // Optimistic update
     const newSet = new Set(checkedItems);
     if (newSet.has(item)) {
       newSet.delete(item);
@@ -93,7 +94,26 @@ const SharedShoppingList = () => {
       newSet.add(item);
     }
     setCheckedItems(newSet);
-    await updateListInDB(categories, newSet);
+    
+    try {
+      const { data, error } = await supabase.rpc('toggle_shopping_list_item_by_token', {
+        p_token: token,
+        p_item: item
+      });
+
+      if (error) throw error;
+      
+      // Sync state with server response
+      if (data) {
+        const shoppingListData = data as { checked_items?: string[] };
+        const serverCheckedItems = shoppingListData.checked_items || [];
+        setCheckedItems(new Set(serverCheckedItems));
+      }
+    } catch (error) {
+      console.error("Error toggling item:", error);
+      // Revert optimistic update on error
+      setCheckedItems(checkedItems);
+    }
   };
 
   const startEditing = (categoryIdx: number, itemIdx: number, currentValue: string) => {
