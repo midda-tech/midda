@@ -170,6 +170,7 @@ export type Database = {
           created_by: string
           household_id: string
           id: string
+          share_token: string | null
           shopping_list: Json
           title: string
           updated_at: string
@@ -179,6 +180,7 @@ export type Database = {
           created_by: string
           household_id: string
           id?: string
+          share_token?: string | null
           shopping_list: Json
           title: string
           updated_at?: string
@@ -188,6 +190,7 @@ export type Database = {
           created_by?: string
           household_id?: string
           id?: string
+          share_token?: string | null
           shopping_list?: Json
           title?: string
           updated_at?: string
@@ -272,6 +275,16 @@ export type Database = {
     }
     Functions: {
       generate_invite_code: { Args: never; Returns: string }
+      get_shopping_list_by_token: {
+        Args: { p_token: string }
+        Returns: {
+          created_at: string
+          id: string
+          shopping_list: Json
+          title: string
+          updated_at: string
+        }[]
+      }
       is_household_member: {
         Args: { p_household_id: string }
         Returns: boolean
@@ -279,6 +292,10 @@ export type Database = {
       join_household_by_invite: {
         Args: { p_invite_code: string }
         Returns: Json
+      }
+      update_shopping_list_by_token: {
+        Args: { p_shopping_list: Json; p_token: string }
+        Returns: boolean
       }
     }
     Enums: {

@@ -20,6 +20,7 @@ import EditRecipe from "./pages/EditRecipe";
 import ShoppingLists from "./pages/ShoppingLists";
 import NewShoppingList from "./pages/NewShoppingList";
 import ViewShoppingList from "./pages/ViewShoppingList";
+import SharedShoppingList from "./pages/SharedShoppingList";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -38,6 +39,9 @@ const App = () => (
             <Route path="/logg-inn" element={<Login />} />
             <Route path="/registrer" element={<Register />} />
             <Route path="/velg-husstand" element={<SelectHousehold />} />
+            
+            {/* Shared shopping list (public, no auth required) */}
+            <Route path="/delt/:token" element={<SharedShoppingList />} />
             
             {/* App routes (authenticated) */}
             <Route path="/app" element={<Home />} />
