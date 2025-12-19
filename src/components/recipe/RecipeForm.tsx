@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,8 @@ import { IconSelector } from "@/components/recipe/IconSelector";
 import { TagSelector } from "@/components/recipe/TagSelector";
 import { useRecipeTags } from "@/hooks/useRecipeTags";
 import { getRecipeIcon, DEFAULT_ICON } from "@/lib/recipeIcons";
+import { useFormDraft } from "@/hooks/useFormDraft";
+import { toast } from "sonner";
 
 export interface RecipeFormData {
   title: string;
@@ -21,6 +23,7 @@ interface RecipeFormProps {
   initialData?: RecipeFormData;
   householdId: string;
   isSystemRecipe?: boolean;
+  draftKey?: string;
   onSubmit: (data: RecipeFormData) => void;
   onCancel: () => void;
   submitLabel: string;
@@ -40,21 +43,41 @@ export const RecipeForm = ({
   initialData,
   householdId,
   isSystemRecipe = false,
+  draftKey,
   onSubmit,
   onCancel,
   submitLabel,
   isSubmitting
 }: RecipeFormProps) => {
+  const { saveDraft, loadDraft, clearDraft } = useFormDraft<RecipeFormData>(draftKey || "recipe-draft");
+  const hasRestoredDraft = useRef(false);
+
   const [formData, setFormData] = useState<RecipeFormData>(() => {
-    if (!initialData) return defaultFormData;
-    return {
-      ...initialData,
-      icon: initialData.icon || DEFAULT_ICON,
-    };
+    if (initialData) {
+      return {
+        ...initialData,
+        icon: initialData.icon || DEFAULT_ICON,
+      };
+    }
+    return defaultFormData;
   });
   const [servingsInput, setServingsInput] = useState(String(initialData?.servings ?? defaultFormData.servings));
   const { tags: availableTags } = useRecipeTags(householdId);
 
+  // Load draft on mount (only if no initialData)
+  useEffect(() => {
+    if (!initialData && !hasRestoredDraft.current && draftKey) {
+      const draft = loadDraft();
+      if (draft) {
+        setFormData(draft);
+        setServingsInput(String(draft.servings));
+        hasRestoredDraft.current = true;
+        toast.info("Kladd gjenopprettet");
+      }
+    }
+  }, [initialData, loadDraft, draftKey]);
+
+  // Update form when initialData changes
   useEffect(() => {
     if (initialData) {
       setFormData({
@@ -64,6 +87,13 @@ export const RecipeForm = ({
       setServingsInput(String(initialData.servings));
     }
   }, [initialData]);
+
+  // Auto-save draft on form changes (only for new recipes with draftKey)
+  useEffect(() => {
+    if (!isSystemRecipe && !initialData && draftKey) {
+      saveDraft(formData);
+    }
+  }, [formData, isSystemRecipe, initialData, saveDraft, draftKey]);
 
   const updateIngredients = {
     add: () => setFormData(prev => ({ ...prev, ingredients: [...prev.ingredients, ""] })),
@@ -128,6 +158,13 @@ export const RecipeForm = ({
 
   const handleSubmit = () => {
     onSubmit(formData);
+  };
+
+  const handleCancel = () => {
+    if (draftKey) {
+      clearDraft();
+    }
+    onCancel();
   };
 
   return (
@@ -243,7 +280,7 @@ export const RecipeForm = ({
           type="button"
           variant="outline"
           size="lg"
-          onClick={onCancel}
+          onClick={handleCancel}
           disabled={isSubmitting}
           className={isSystemRecipe ? "flex-1" : ""}
         >

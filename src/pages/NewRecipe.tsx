@@ -7,6 +7,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { RecipeForm, RecipeFormData } from "@/components/recipe/RecipeForm";
 import { z } from "zod";
 import { DEFAULT_ICON } from "@/lib/recipeIcons";
+import { useFormDraft } from "@/hooks/useFormDraft";
 
 const recipeSchema = z.object({
   title: z.string().trim().min(1, "Tittel er påkrevd").max(100, "Tittel må være mindre enn 100 tegn"),
@@ -32,10 +33,13 @@ const transformParsedRecipe = (recipe: any): RecipeFormData => ({
     : [],
 });
 
+const DRAFT_KEY = "new-recipe-draft";
+
 const NewRecipe = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const parsedRecipe = location.state?.parsedRecipe;
+  const { clearDraft } = useFormDraft<RecipeFormData>(DRAFT_KEY);
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -109,6 +113,7 @@ const NewRecipe = () => {
 
       if (error) throw error;
 
+      clearDraft();
       toast.success("Oppskrift lagret!");
       navigate("/app/oppskrifter");
     } catch (error: any) {
@@ -144,6 +149,7 @@ const NewRecipe = () => {
               <RecipeForm
                 householdId={householdId}
                 initialData={parsedRecipe ? transformParsedRecipe(parsedRecipe) : undefined}
+                draftKey={parsedRecipe ? undefined : DRAFT_KEY}
                 onSubmit={handleSubmit}
                 onCancel={() => navigate("/app/oppskrifter")}
                 submitLabel="Lagre oppskrift"
