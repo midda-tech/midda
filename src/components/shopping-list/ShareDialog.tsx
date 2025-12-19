@@ -25,7 +25,7 @@ const ShareDialog = ({ listId, shareToken, onTokenChange }: ShareDialogProps) =>
   const [copied, setCopied] = useState(false);
 
   const shareUrl = shareToken 
-    ? `${window.location.origin}/delt/${shareToken}`
+    ? `https://midda.no/delt/${shareToken}`
     : null;
 
   const generateShareLink = async () => {
