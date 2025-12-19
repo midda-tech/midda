@@ -65,6 +65,40 @@ const ViewShoppingList = () => {
     checkAuthAndFetchList();
   }, [navigate, id]);
 
+  // Real-time subscription for checked items
+  useEffect(() => {
+    if (!id) return;
+
+    const channel = supabase
+      .channel(`shopping-list-${id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'shopping_lists',
+          filter: `id=eq.${id}`
+        },
+        (payload) => {
+          const newData = payload.new as { shopping_list?: { checked_items?: string[]; categories?: ShoppingListCategory[] } };
+          if (newData.shopping_list?.checked_items) {
+            setCheckedItems(new Set(newData.shopping_list.checked_items));
+          }
+          if (newData.shopping_list?.categories) {
+            setShoppingList(prev => prev ? {
+              ...prev,
+              shopping_list: newData.shopping_list as { categories: ShoppingListCategory[] }
+            } : null);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id]);
+
   const fetchShoppingList = async () => {
     try {
       const { data, error } = await supabase

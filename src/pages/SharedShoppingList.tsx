@@ -40,6 +40,40 @@ const SharedShoppingList = () => {
     }
   }, [token]);
 
+  // Real-time subscription for checked items
+  useEffect(() => {
+    if (!shoppingList?.id) return;
+
+    const channel = supabase
+      .channel(`shared-shopping-list-${shoppingList.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'shopping_lists',
+          filter: `id=eq.${shoppingList.id}`
+        },
+        (payload) => {
+          const newData = payload.new as { shopping_list?: { checked_items?: string[]; categories?: ShoppingListCategory[] } };
+          if (newData.shopping_list?.checked_items) {
+            setCheckedItems(new Set(newData.shopping_list.checked_items));
+          }
+          if (newData.shopping_list?.categories) {
+            setShoppingList(prev => prev ? {
+              ...prev,
+              shopping_list: newData.shopping_list as { categories: ShoppingListCategory[]; checked_items?: string[] }
+            } : null);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [shoppingList?.id]);
+
   const fetchSharedList = async () => {
     try {
       const { data, error } = await supabase.rpc('get_shopping_list_by_token', {
