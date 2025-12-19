@@ -1,37 +1,33 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { ArrowLeft, Trash2, Pencil, X, Plus, Check } from "lucide-react";
+import { Pencil, X, Plus, Check, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
-import { ShoppingList, ShoppingListCategory } from "@/types/shopping-list";
+import { ShoppingListCategory } from "@/types/shopping-list";
 import { Input } from "@/components/ui/input";
-import ShareDialog from "@/components/shopping-list/ShareDialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-interface ShoppingListWithToken extends ShoppingList {
-  share_token: string | null;
+interface SharedListData {
+  id: string;
+  title: string;
+  shopping_list: {
+    categories: ShoppingListCategory[];
+    checked_items?: string[];
+  };
+  created_at: string;
+  updated_at: string;
 }
 
-const ViewShoppingList = () => {
-  const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
+const SharedShoppingList = () => {
+  const { token } = useParams<{ token: string }>();
   const [loading, setLoading] = useState(true);
-  const [shoppingList, setShoppingList] = useState<ShoppingListWithToken | null>(null);
+  const [notFound, setNotFound] = useState(false);
+  const [shoppingList, setShoppingList] = useState<SharedListData | null>(null);
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
   const [editingItem, setEditingItem] = useState<{ categoryIdx: number; itemIdx: number } | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -39,58 +35,53 @@ const ViewShoppingList = () => {
   const [newItemValue, setNewItemValue] = useState("");
 
   useEffect(() => {
-    const checkAuthAndFetchList = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        navigate("/logg-inn");
-        return;
-      }
+    if (token) {
+      fetchSharedList();
+    }
+  }, [token]);
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("current_household_id")
-        .eq("id", session.user.id)
-        .maybeSingle();
-
-      if (!profile?.current_household_id) {
-        navigate("/velg-husstand");
-        return;
-      }
-
-      await fetchShoppingList();
-      setLoading(false);
-    };
-
-    checkAuthAndFetchList();
-  }, [navigate, id]);
-
-  const fetchShoppingList = async () => {
+  const fetchSharedList = async () => {
     try {
-      const { data, error } = await supabase
-        .from("shopping_lists")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
+      const { data, error } = await supabase.rpc('get_shopping_list_by_token', {
+        p_token: token
+      });
 
       if (error) throw error;
       
-      if (!data) {
-        toast.error("Handleliste ikke funnet");
-        navigate("/app/handlelister");
+      if (!data || data.length === 0) {
+        setNotFound(true);
+        setLoading(false);
         return;
       }
 
-      const listData = data as unknown as ShoppingListWithToken;
+      const listData = data[0] as unknown as SharedListData;
       setShoppingList(listData);
       
-      // Load checked items from database
       const savedCheckedItems = listData.shopping_list?.checked_items || [];
       setCheckedItems(new Set(savedCheckedItems));
+      setLoading(false);
     } catch (error) {
-      console.error("Error fetching shopping list:", error);
-      toast.error("Kunne ikke laste handleliste");
-      navigate("/app/handlelister");
+      console.error("Error fetching shared list:", error);
+      setNotFound(true);
+      setLoading(false);
+    }
+  };
+
+  const updateListInDB = async (updatedCategories: ShoppingListCategory[], updatedCheckedItems: Set<string>) => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await supabase.rpc('update_shopping_list_by_token', {
+        p_token: token,
+        p_shopping_list: {
+          categories: updatedCategories,
+          checked_items: Array.from(updatedCheckedItems)
+        } as any
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error updating shared list:", error);
+      toast.error("Kunne ikke oppdatere handleliste");
     }
   };
 
@@ -102,42 +93,7 @@ const ViewShoppingList = () => {
       newSet.add(item);
     }
     setCheckedItems(newSet);
-    
-    // Persist to database
-    try {
-      const { error } = await supabase
-        .from("shopping_lists")
-        .update({
-          shopping_list: {
-            categories: shoppingList?.shopping_list?.categories || [],
-            checked_items: Array.from(newSet)
-          } as any
-        })
-        .eq("id", id);
-
-      if (error) throw error;
-    } catch (error) {
-      console.error("Error saving checked state:", error);
-    }
-  };
-
-  const updateShoppingListInDB = async (updatedCategories: ShoppingListCategory[]) => {
-    try {
-      const { error } = await supabase
-        .from("shopping_lists")
-        .update({
-          shopping_list: { 
-            categories: updatedCategories,
-            checked_items: Array.from(checkedItems)
-          } as any
-        })
-        .eq("id", id);
-
-      if (error) throw error;
-    } catch (error) {
-      console.error("Error updating shopping list:", error);
-      toast.error("Kunne ikke oppdatere handleliste");
-    }
+    await updateListInDB(categories, newSet);
   };
 
   const startEditing = (categoryIdx: number, itemIdx: number, currentValue: string) => {
@@ -156,10 +112,10 @@ const ViewShoppingList = () => {
 
     setShoppingList({
       ...shoppingList,
-      shopping_list: { categories: updatedCategories }
+      shopping_list: { ...shoppingList.shopping_list, categories: updatedCategories }
     });
 
-    await updateShoppingListInDB(updatedCategories);
+    await updateListInDB(updatedCategories, checkedItems);
     setEditingItem(null);
     setEditValue("");
   };
@@ -171,24 +127,20 @@ const ViewShoppingList = () => {
     const deletedItem = updatedCategories[categoryIdx].items[itemIdx];
     updatedCategories[categoryIdx].items.splice(itemIdx, 1);
 
-    // Remove category if it's empty
     if (updatedCategories[categoryIdx].items.length === 0) {
       updatedCategories.splice(categoryIdx, 1);
     }
 
-    // Remove from checked items if it was checked
-    setCheckedItems(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(deletedItem);
-      return newSet;
-    });
+    const newCheckedItems = new Set(checkedItems);
+    newCheckedItems.delete(deletedItem);
+    setCheckedItems(newCheckedItems);
 
     setShoppingList({
       ...shoppingList,
-      shopping_list: { categories: updatedCategories }
+      shopping_list: { ...shoppingList.shopping_list, categories: updatedCategories }
     });
 
-    await updateShoppingListInDB(updatedCategories);
+    await updateListInDB(updatedCategories, newCheckedItems);
     toast.success("Vare fjernet");
   };
 
@@ -208,88 +160,66 @@ const ViewShoppingList = () => {
 
     setShoppingList({
       ...shoppingList,
-      shopping_list: { categories: updatedCategories }
+      shopping_list: { ...shoppingList.shopping_list, categories: updatedCategories }
     });
 
-    await updateShoppingListInDB(updatedCategories);
+    await updateListInDB(updatedCategories, checkedItems);
     setAddingToCategory(null);
     setNewItemValue("");
     toast.success("Vare lagt til");
   };
 
-  const handleDelete = async () => {
-    try {
-      const { error } = await supabase
-        .from("shopping_lists")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-
-      toast.success("Handleliste slettet");
-      navigate("/app/handlelister");
-    } catch (error) {
-      console.error("Error deleting shopping list:", error);
-      toast.error("Kunne ikke slette handleliste");
-    }
-  };
-
   const categories = shoppingList?.shopping_list?.categories || [];
 
   if (loading) {
-    return null;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <ShoppingCart className="h-12 w-12 mx-auto text-primary animate-pulse" />
+          <p className="mt-4 text-muted-foreground">Laster handleliste...</p>
+        </div>
+      </div>
+    );
   }
 
-  if (!shoppingList) {
-    return null;
+  if (notFound) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <Card className="max-w-md w-full">
+          <CardContent className="py-12 text-center">
+            <ShoppingCart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h1 className="font-serif text-xl font-bold mb-2">Handleliste ikke funnet</h1>
+            <p className="text-muted-foreground">
+              Denne lenken er ugyldig eller handlelisten er ikke lenger delt.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex h-16 items-center px-4 gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/app/handlelister")}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+          <ShoppingCart className="h-6 w-6 text-primary" />
           <div className="flex-1 min-w-0">
-            <h1 className="font-serif text-xl font-bold truncate">{shoppingList.title}</h1>
+            <h1 className="font-serif text-xl font-bold truncate">{shoppingList?.title}</h1>
             <p className="text-xs text-muted-foreground">
-              {format(new Date(shoppingList.created_at), "d. MMMM yyyy", { locale: nb })}
+              {shoppingList && format(new Date(shoppingList.created_at), "d. MMMM yyyy", { locale: nb })}
             </p>
           </div>
-          <ShareDialog
-            listId={id!}
-            shareToken={shoppingList.share_token}
-            onTokenChange={(token) => setShoppingList({ ...shoppingList, share_token: token })}
-          />
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Trash2 className="h-5 w-5" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Slett handleliste?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Er du sikker på at du vil slette denne handlelisten? Dette kan ikke angres.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete}>Slett</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
         </div>
       </header>
 
       <main className="flex-1 p-4 pb-24">
         <div className="max-w-2xl mx-auto space-y-4">
+          <Alert>
+            <AlertDescription>
+              Du ser på en delt handleliste. Du kan huke av og redigere varer.
+            </AlertDescription>
+          </Alert>
+
           {categories.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
@@ -457,4 +387,4 @@ const ViewShoppingList = () => {
   );
 };
 
-export default ViewShoppingList;
+export default SharedShoppingList;
