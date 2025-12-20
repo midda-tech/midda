@@ -274,6 +274,32 @@ export type Database = {
       }
     }
     Functions: {
+      add_shopping_list_item: {
+        Args: { p_category_name: string; p_item: string; p_list_id: string }
+        Returns: Json
+      }
+      add_shopping_list_item_by_token: {
+        Args: { p_category_name: string; p_item: string; p_token: string }
+        Returns: Json
+      }
+      edit_shopping_list_item: {
+        Args: {
+          p_category_name: string
+          p_item_index: number
+          p_list_id: string
+          p_new_value: string
+        }
+        Returns: Json
+      }
+      edit_shopping_list_item_by_token: {
+        Args: {
+          p_category_name: string
+          p_item_index: number
+          p_new_value: string
+          p_token: string
+        }
+        Returns: Json
+      }
       generate_invite_code: { Args: never; Returns: string }
       get_shopping_list_by_token: {
         Args: { p_token: string }
@@ -291,6 +317,18 @@ export type Database = {
       }
       join_household_by_invite: {
         Args: { p_invite_code: string }
+        Returns: Json
+      }
+      remove_shopping_list_item: {
+        Args: {
+          p_category_name: string
+          p_item_index: number
+          p_list_id: string
+        }
+        Returns: Json
+      }
+      remove_shopping_list_item_by_token: {
+        Args: { p_category_name: string; p_item_index: number; p_token: string }
         Returns: Json
       }
       toggle_shopping_list_item: {
