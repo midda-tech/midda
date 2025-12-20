@@ -192,8 +192,7 @@ const ViewShoppingList = () => {
     setEditValue("");
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.rpc as any)('edit_shopping_list_item', {
+      const { data, error } = await supabase.rpc('edit_shopping_list_item', {
         p_list_id: id,
         p_category_name: categoryName,
         p_item_index: itemIdx,
@@ -255,8 +254,7 @@ const ViewShoppingList = () => {
     });
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.rpc as any)('remove_shopping_list_item', {
+      const { data, error } = await supabase.rpc('remove_shopping_list_item', {
         p_list_id: id,
         p_category_name: categoryName,
         p_item_index: itemIdx
@@ -314,8 +312,7 @@ const ViewShoppingList = () => {
     setNewItemValue("");
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.rpc as any)('add_shopping_list_item', {
+      const { data, error } = await supabase.rpc('add_shopping_list_item', {
         p_list_id: id,
         p_category_name: categoryName,
         p_item: newItem
