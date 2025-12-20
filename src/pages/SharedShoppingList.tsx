@@ -163,8 +163,7 @@ const SharedShoppingList = () => {
     setEditValue("");
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.rpc as any)('edit_shopping_list_item_by_token', {
+      const { data, error } = await supabase.rpc('edit_shopping_list_item_by_token', {
         p_token: token,
         p_category_name: categoryName,
         p_item_index: itemIdx,
@@ -226,8 +225,7 @@ const SharedShoppingList = () => {
     });
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.rpc as any)('remove_shopping_list_item_by_token', {
+      const { data, error } = await supabase.rpc('remove_shopping_list_item_by_token', {
         p_token: token,
         p_category_name: categoryName,
         p_item_index: itemIdx
@@ -285,8 +283,7 @@ const SharedShoppingList = () => {
     setNewItemValue("");
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase.rpc as any)('add_shopping_list_item_by_token', {
+      const { data, error } = await supabase.rpc('add_shopping_list_item_by_token', {
         p_token: token,
         p_category_name: categoryName,
         p_item: newItem
