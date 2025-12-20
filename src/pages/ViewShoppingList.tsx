@@ -161,25 +161,6 @@ const ViewShoppingList = () => {
     }
   };
 
-  const updateShoppingListInDB = async (updatedCategories: ShoppingListCategory[]) => {
-    try {
-      const { error } = await supabase
-        .from("shopping_lists")
-        .update({
-          shopping_list: { 
-            categories: updatedCategories,
-            checked_items: Array.from(checkedItems)
-          } as any
-        })
-        .eq("id", id);
-
-      if (error) throw error;
-    } catch (error) {
-      console.error("Error updating shopping list:", error);
-      toast.error("Kunne ikke oppdatere handleliste");
-    }
-  };
-
   const startEditing = (categoryIdx: number, itemIdx: number, currentValue: string) => {
     setEditingItem({ categoryIdx, itemIdx });
     setEditValue(currentValue);
@@ -191,45 +172,107 @@ const ViewShoppingList = () => {
       return;
     }
 
-    const updatedCategories = [...categories];
-    updatedCategories[editingItem.categoryIdx].items[editingItem.itemIdx] = editValue.trim();
+    const categoryName = categories[editingItem.categoryIdx].name;
+    const oldValue = categories[editingItem.categoryIdx].items[editingItem.itemIdx];
+    const newValue = editValue.trim();
 
+    // Optimistic update
+    const updatedCategories = [...categories];
+    updatedCategories[editingItem.categoryIdx].items[editingItem.itemIdx] = newValue;
     setShoppingList({
       ...shoppingList,
-      shopping_list: { categories: updatedCategories }
+      shopping_list: { ...shoppingList.shopping_list, categories: updatedCategories }
     });
-
-    await updateShoppingListInDB(updatedCategories);
     setEditingItem(null);
     setEditValue("");
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase.rpc as any)('edit_shopping_list_item', {
+        p_list_id: id,
+        p_category_name: categoryName,
+        p_item_index: editingItem.itemIdx,
+        p_new_value: newValue
+      });
+
+      if (error) throw error;
+
+      // Sync with server response
+      if (data && typeof data === 'object') {
+        const result = data as { categories?: ShoppingListCategory[]; checked_items?: string[] };
+        if (result.categories) {
+          setShoppingList(prev => prev ? {
+            ...prev,
+            shopping_list: { categories: result.categories!, checked_items: result.checked_items }
+          } : null);
+        }
+        if (result.checked_items) {
+          setCheckedItems(new Set(result.checked_items));
+        }
+      }
+    } catch (error) {
+      console.error("Error editing item:", error);
+      toast.error("Kunne ikke oppdatere vare");
+      // Revert on error
+      const revertedCategories = [...categories];
+      revertedCategories[editingItem.categoryIdx].items[editingItem.itemIdx] = oldValue;
+      setShoppingList({
+        ...shoppingList,
+        shopping_list: { ...shoppingList.shopping_list, categories: revertedCategories }
+      });
+    }
   };
 
   const deleteItem = async (categoryIdx: number, itemIdx: number) => {
     if (!shoppingList) return;
 
-    const updatedCategories = [...categories];
-    const deletedItem = updatedCategories[categoryIdx].items[itemIdx];
-    updatedCategories[categoryIdx].items.splice(itemIdx, 1);
+    const categoryName = categories[categoryIdx].name;
+    const deletedItem = categories[categoryIdx].items[itemIdx];
 
-    // Remove category if it's empty
+    // Optimistic update
+    const updatedCategories = [...categories];
+    updatedCategories[categoryIdx].items.splice(itemIdx, 1);
     if (updatedCategories[categoryIdx].items.length === 0) {
       updatedCategories.splice(categoryIdx, 1);
     }
-
-    // Remove from checked items if it was checked
-    setCheckedItems(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(deletedItem);
-      return newSet;
-    });
-
+    const newCheckedItems = new Set(checkedItems);
+    newCheckedItems.delete(deletedItem);
+    setCheckedItems(newCheckedItems);
     setShoppingList({
       ...shoppingList,
-      shopping_list: { categories: updatedCategories }
+      shopping_list: { ...shoppingList.shopping_list, categories: updatedCategories }
     });
 
-    await updateShoppingListInDB(updatedCategories);
-    toast.success("Vare fjernet");
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase.rpc as any)('remove_shopping_list_item', {
+        p_list_id: id,
+        p_category_name: categoryName,
+        p_item_index: itemIdx
+      });
+
+      if (error) throw error;
+
+      // Sync with server response
+      if (data && typeof data === 'object') {
+        const result = data as { categories?: ShoppingListCategory[]; checked_items?: string[] };
+        if (result.categories) {
+          setShoppingList(prev => prev ? {
+            ...prev,
+            shopping_list: { categories: result.categories!, checked_items: result.checked_items }
+          } : null);
+        }
+        if (result.checked_items) {
+          setCheckedItems(new Set(result.checked_items));
+        }
+      }
+      toast.success("Vare fjernet");
+    } catch (error) {
+      console.error("Error deleting item:", error);
+      toast.error("Kunne ikke fjerne vare");
+      // Refetch to restore state
+      await fetchShoppingList();
+    }
   };
 
   const startAddingItem = (categoryIdx: number) => {
@@ -243,18 +286,46 @@ const ViewShoppingList = () => {
       return;
     }
 
-    const updatedCategories = [...categories];
-    updatedCategories[categoryIdx].items.push(newItemValue.trim());
+    const categoryName = categories[categoryIdx].name;
+    const newItem = newItemValue.trim();
 
+    // Optimistic update
+    const updatedCategories = [...categories];
+    updatedCategories[categoryIdx].items.push(newItem);
     setShoppingList({
       ...shoppingList,
-      shopping_list: { categories: updatedCategories }
+      shopping_list: { ...shoppingList.shopping_list, categories: updatedCategories }
     });
-
-    await updateShoppingListInDB(updatedCategories);
     setAddingToCategory(null);
     setNewItemValue("");
-    toast.success("Vare lagt til");
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase.rpc as any)('add_shopping_list_item', {
+        p_list_id: id,
+        p_category_name: categoryName,
+        p_item: newItem
+      });
+
+      if (error) throw error;
+
+      // Sync with server response
+      if (data && typeof data === 'object') {
+        const result = data as { categories?: ShoppingListCategory[] };
+        if (result.categories) {
+          setShoppingList(prev => prev ? {
+            ...prev,
+            shopping_list: { ...shoppingList.shopping_list, categories: result.categories! }
+          } : null);
+        }
+      }
+      toast.success("Vare lagt til");
+    } catch (error) {
+      console.error("Error adding item:", error);
+      toast.error("Kunne ikke legge til vare");
+      // Refetch to restore state
+      await fetchShoppingList();
+    }
   };
 
   const handleDelete = async () => {
