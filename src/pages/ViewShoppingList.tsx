@@ -37,6 +37,8 @@ const ViewShoppingList = () => {
   const [editValue, setEditValue] = useState("");
   const [addingToCategory, setAddingToCategory] = useState<number | null>(null);
   const [newItemValue, setNewItemValue] = useState("");
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState("");
 
   useEffect(() => {
     const checkAuthAndFetchList = async () => {
@@ -272,6 +274,33 @@ const ViewShoppingList = () => {
     }
   };
 
+  const startEditingTitle = () => {
+    setEditedTitle(shoppingList?.title || "");
+    setIsEditingTitle(true);
+  };
+
+  const saveTitle = async () => {
+    const newTitle = editedTitle.trim() || "Handleliste";
+    setIsEditingTitle(false);
+    
+    if (newTitle === shoppingList?.title) return;
+    
+    setShoppingList(prev => prev ? { ...prev, title: newTitle } : null);
+    
+    try {
+      const { error } = await supabase
+        .from("shopping_lists")
+        .update({ title: newTitle })
+        .eq("id", id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error updating title:", error);
+      toast.error("Kunne ikke oppdatere tittel");
+      setShoppingList(prev => prev ? { ...prev, title: shoppingList?.title || "" } : null);
+    }
+  };
+
   const categories = shoppingList?.shopping_list?.categories || [];
 
   if (loading) {
@@ -294,7 +323,29 @@ const ViewShoppingList = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex-1 min-w-0">
-            <h1 className="font-serif text-xl font-bold truncate">{shoppingList.title}</h1>
+            {isEditingTitle ? (
+              <Input
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
+                onBlur={saveTitle}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    saveTitle();
+                  } else if (e.key === 'Escape') {
+                    setIsEditingTitle(false);
+                  }
+                }}
+                autoFocus
+                className="font-serif text-xl font-bold h-8 px-1"
+              />
+            ) : (
+              <h1 
+                className="font-serif text-xl font-bold truncate cursor-pointer hover:text-primary/80 transition-colors"
+                onClick={startEditingTitle}
+              >
+                {shoppingList.title}
+              </h1>
+            )}
             <p className="text-xs text-muted-foreground">
               {format(new Date(shoppingList.created_at), "d. MMMM yyyy", { locale: nb })}
             </p>
