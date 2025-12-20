@@ -172,13 +172,18 @@ const ViewShoppingList = () => {
       return;
     }
 
-    const categoryName = categories[editingItem.categoryIdx].name;
-    const oldValue = categories[editingItem.categoryIdx].items[editingItem.itemIdx];
+    // Capture values BEFORE clearing state to avoid stale closures
+    const { categoryIdx, itemIdx } = editingItem;
+    const categoryName = categories[categoryIdx].name;
+    const oldValue = categories[categoryIdx].items[itemIdx];
     const newValue = editValue.trim();
 
-    // Optimistic update
-    const updatedCategories = [...categories];
-    updatedCategories[editingItem.categoryIdx].items[editingItem.itemIdx] = newValue;
+    // Immutable optimistic update
+    const updatedCategories = categories.map((cat, idx) =>
+      idx === categoryIdx
+        ? { ...cat, items: cat.items.map((item, i) => i === itemIdx ? newValue : item) }
+        : cat
+    );
     setShoppingList({
       ...shoppingList,
       shopping_list: { ...shoppingList.shopping_list, categories: updatedCategories }
@@ -191,7 +196,7 @@ const ViewShoppingList = () => {
       const { data, error } = await (supabase.rpc as any)('edit_shopping_list_item', {
         p_list_id: id,
         p_category_name: categoryName,
-        p_item_index: editingItem.itemIdx,
+        p_item_index: itemIdx,
         p_new_value: newValue
       });
 
@@ -213,9 +218,12 @@ const ViewShoppingList = () => {
     } catch (error) {
       console.error("Error editing item:", error);
       toast.error("Kunne ikke oppdatere vare");
-      // Revert on error
-      const revertedCategories = [...categories];
-      revertedCategories[editingItem.categoryIdx].items[editingItem.itemIdx] = oldValue;
+      // Revert on error with immutable update
+      const revertedCategories = categories.map((cat, idx) =>
+        idx === categoryIdx
+          ? { ...cat, items: cat.items.map((item, i) => i === itemIdx ? oldValue : item) }
+          : cat
+      );
       setShoppingList({
         ...shoppingList,
         shopping_list: { ...shoppingList.shopping_list, categories: revertedCategories }
@@ -229,12 +237,15 @@ const ViewShoppingList = () => {
     const categoryName = categories[categoryIdx].name;
     const deletedItem = categories[categoryIdx].items[itemIdx];
 
-    // Optimistic update
-    const updatedCategories = [...categories];
-    updatedCategories[categoryIdx].items.splice(itemIdx, 1);
-    if (updatedCategories[categoryIdx].items.length === 0) {
-      updatedCategories.splice(categoryIdx, 1);
-    }
+    // Immutable optimistic update
+    const updatedCategories = categories
+      .map((cat, idx) =>
+        idx === categoryIdx
+          ? { ...cat, items: cat.items.filter((_, i) => i !== itemIdx) }
+          : cat
+      )
+      .filter(cat => cat.items.length > 0);
+    
     const newCheckedItems = new Set(checkedItems);
     newCheckedItems.delete(deletedItem);
     setCheckedItems(newCheckedItems);
@@ -289,9 +300,12 @@ const ViewShoppingList = () => {
     const categoryName = categories[categoryIdx].name;
     const newItem = newItemValue.trim();
 
-    // Optimistic update
-    const updatedCategories = [...categories];
-    updatedCategories[categoryIdx].items.push(newItem);
+    // Immutable optimistic update
+    const updatedCategories = categories.map((cat, idx) =>
+      idx === categoryIdx
+        ? { ...cat, items: [...cat.items, newItem] }
+        : cat
+    );
     setShoppingList({
       ...shoppingList,
       shopping_list: { ...shoppingList.shopping_list, categories: updatedCategories }
