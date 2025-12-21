@@ -24,26 +24,28 @@ interface RecipeFormProps {
   householdId: string;
   isSystemRecipe?: boolean;
   draftKey?: string;
+  defaultServings?: number;
   onSubmit: (data: RecipeFormData) => void;
   onCancel: () => void;
   submitLabel: string;
   isSubmitting: boolean;
 }
 
-const defaultFormData: RecipeFormData = {
+const getDefaultFormData = (defaultServings?: number): RecipeFormData => ({
   title: "",
-  servings: 2,
+  servings: defaultServings ?? 4,
   icon: DEFAULT_ICON,
   ingredients: [""],
   instructions: [""],
   tags: []
-};
+});
 
 export const RecipeForm = ({
   initialData,
   householdId,
   isSystemRecipe = false,
   draftKey,
+  defaultServings,
   onSubmit,
   onCancel,
   submitLabel,
@@ -51,6 +53,7 @@ export const RecipeForm = ({
 }: RecipeFormProps) => {
   const { saveDraft, loadDraft, clearDraft } = useFormDraft<RecipeFormData>(draftKey || "recipe-draft");
   const hasRestoredDraft = useRef(false);
+  const defaultFormData = getDefaultFormData(defaultServings);
 
   const [formData, setFormData] = useState<RecipeFormData>(() => {
     if (initialData) {
@@ -191,7 +194,12 @@ export const RecipeForm = ({
           onChange={(e) => setServingsInput(e.target.value)}
           onBlur={() => {
             const value = parseInt(servingsInput);
-            const validValue = isNaN(value) || value < 1 ? 1 : value;
+            if (isNaN(value) || value < 1) {
+              toast.error("Antall personer må være et gyldig tall");
+              setServingsInput(String(formData.servings));
+              return;
+            }
+            const validValue = value > 50 ? 50 : value;
             setServingsInput(String(validValue));
             setFormData(prev => ({ ...prev, servings: validValue }));
           }}
