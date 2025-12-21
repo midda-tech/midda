@@ -65,6 +65,7 @@ export const RecipeForm = ({
     return defaultFormData;
   });
   const [servingsInput, setServingsInput] = useState(String(initialData?.servings ?? defaultFormData.servings));
+  const [servingsError, setServingsError] = useState<string | null>(null);
   const { tags: availableTags } = useRecipeTags(householdId);
 
   // Load draft on mount (only if no initialData)
@@ -160,6 +161,11 @@ export const RecipeForm = ({
   };
 
   const handleSubmit = () => {
+    const servingsValue = parseInt(servingsInput);
+    if (isNaN(servingsValue) || servingsValue < 1) {
+      setServingsError("Antall personer må være et gyldig tall");
+      return;
+    }
     onSubmit(formData);
   };
 
@@ -191,12 +197,14 @@ export const RecipeForm = ({
           min="1"
           max="50"
           value={servingsInput}
-          onChange={(e) => setServingsInput(e.target.value)}
+          onChange={(e) => {
+            setServingsInput(e.target.value);
+            setServingsError(null);
+          }}
           onBlur={() => {
             const value = parseInt(servingsInput);
             if (isNaN(value) || value < 1) {
-              toast.error("Antall personer må være et gyldig tall");
-              setServingsInput(String(formData.servings));
+              setServingsInput("");
               return;
             }
             const validValue = value > 50 ? 50 : value;
@@ -204,7 +212,11 @@ export const RecipeForm = ({
             setFormData(prev => ({ ...prev, servings: validValue }));
           }}
           disabled={isSystemRecipe}
+          className={servingsError ? "border-destructive" : ""}
         />
+        {servingsError && (
+          <p className="text-sm text-destructive">{servingsError}</p>
+        )}
       </div>
 
       <div className="space-y-2">
