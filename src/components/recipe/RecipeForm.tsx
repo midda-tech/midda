@@ -162,14 +162,16 @@ export const RecipeForm = ({
   };
 
   const handleSubmit = () => {
-    const servingsValue = parseFloat(servingsInput);
-    if (isNaN(servingsValue) || servingsValue < 0.5) {
-      setServingsError("Antall personer må være minst 0.5");
+    const servingsValue = parseFloat(servingsInput.replace(",", "."));
+    if (isNaN(servingsValue) || servingsValue <= 0) {
+      setServingsError("Antall personer må være et gyldig tall");
       servingsRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       servingsRef.current?.focus();
       return;
     }
-    onSubmit(formData);
+    // Round to nearest integer for database storage
+    const roundedServings = Math.round(servingsValue);
+    onSubmit({ ...formData, servings: roundedServings });
   };
 
   const handleCancel = () => {
@@ -197,24 +199,21 @@ export const RecipeForm = ({
         <Input
           ref={servingsRef}
           id="servings"
-          type="number"
-          min="0.5"
-          step="0.5"
-          max="50"
+          type="text"
+          inputMode="decimal"
           value={servingsInput}
           onChange={(e) => {
             setServingsInput(e.target.value);
             setServingsError(null);
           }}
           onBlur={() => {
-            const value = parseFloat(servingsInput);
-            if (isNaN(value) || value < 0.5) {
+            const normalizedInput = servingsInput.replace(",", ".");
+            const value = parseFloat(normalizedInput);
+            if (isNaN(value) || value <= 0) {
               setServingsInput("");
               return;
             }
-            const validValue = value > 50 ? 50 : value;
-            setServingsInput(String(validValue));
-            setFormData(prev => ({ ...prev, servings: validValue }));
+            setServingsInput(normalizedInput);
           }}
           disabled={isSystemRecipe}
           className={servingsError ? "border-destructive" : ""}
