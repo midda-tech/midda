@@ -53,6 +53,7 @@ export const RecipeForm = ({
 }: RecipeFormProps) => {
   const { saveDraft, loadDraft, clearDraft } = useFormDraft<RecipeFormData>(draftKey || "recipe-draft");
   const hasRestoredDraft = useRef(false);
+  const servingsRef = useRef<HTMLInputElement>(null);
   const defaultFormData = getDefaultFormData(defaultServings);
 
   const [formData, setFormData] = useState<RecipeFormData>(() => {
@@ -164,6 +165,8 @@ export const RecipeForm = ({
     const servingsValue = parseInt(servingsInput);
     if (isNaN(servingsValue) || servingsValue < 1) {
       setServingsError("Antall personer må være et gyldig tall");
+      servingsRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      servingsRef.current?.focus();
       return;
     }
     onSubmit(formData);
@@ -192,6 +195,7 @@ export const RecipeForm = ({
       <div className="space-y-2">
         <Label htmlFor="servings">Antall personer</Label>
         <Input
+          ref={servingsRef}
           id="servings"
           type="number"
           min="1"
