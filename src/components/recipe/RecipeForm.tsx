@@ -162,9 +162,9 @@ export const RecipeForm = ({
   };
 
   const handleSubmit = () => {
-    const servingsValue = parseInt(servingsInput);
-    if (isNaN(servingsValue) || servingsValue < 1) {
-      setServingsError("Antall personer må være et gyldig tall");
+    const servingsValue = parseFloat(servingsInput);
+    if (isNaN(servingsValue) || servingsValue < 0.5) {
+      setServingsError("Antall personer må være minst 0.5");
       servingsRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       servingsRef.current?.focus();
       return;
@@ -198,7 +198,8 @@ export const RecipeForm = ({
           ref={servingsRef}
           id="servings"
           type="number"
-          min="1"
+          min="0.5"
+          step="0.5"
           max="50"
           value={servingsInput}
           onChange={(e) => {
@@ -206,8 +207,8 @@ export const RecipeForm = ({
             setServingsError(null);
           }}
           onBlur={() => {
-            const value = parseInt(servingsInput);
-            if (isNaN(value) || value < 1) {
+            const value = parseFloat(servingsInput);
+            if (isNaN(value) || value < 0.5) {
               setServingsInput("");
               return;
             }
