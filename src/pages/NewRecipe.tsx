@@ -45,6 +45,7 @@ const NewRecipe = () => {
   const [saving, setSaving] = useState(false);
   const [householdId, setHouseholdId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [defaultServings, setDefaultServings] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -69,6 +70,17 @@ const NewRecipe = () => {
       }
 
       setHouseholdId(profile.current_household_id);
+
+      const { data: household } = await supabase
+        .from("households")
+        .select("default_servings")
+        .eq("id", profile.current_household_id)
+        .maybeSingle();
+
+      if (household?.default_servings) {
+        setDefaultServings(household.default_servings);
+      }
+
       setLoading(false);
     };
 
@@ -150,6 +162,7 @@ const NewRecipe = () => {
                 householdId={householdId}
                 initialData={parsedRecipe ? transformParsedRecipe(parsedRecipe) : undefined}
                 draftKey={parsedRecipe ? undefined : DRAFT_KEY}
+                defaultServings={defaultServings}
                 onSubmit={handleSubmit}
                 onCancel={() => navigate("/app/oppskrifter")}
                 submitLabel="Lagre oppskrift"
