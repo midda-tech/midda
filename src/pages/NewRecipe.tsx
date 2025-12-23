@@ -8,7 +8,7 @@ import { RecipeForm, RecipeFormData } from "@/components/recipe/RecipeForm";
 import { z } from "zod";
 import { DEFAULT_ICON } from "@/lib/recipeIcons";
 import { useFormDraft } from "@/hooks/useFormDraft";
-
+import { registerRecipeTags } from "@/hooks/useRegisterRecipeTags";
 const recipeSchema = z.object({
   title: z.string().trim().min(1, "Tittel er påkrevd").max(100, "Tittel må være mindre enn 100 tegn"),
   servings: z.number().min(1, "Antall personer må være minst 1").max(50, "Antall personer må være mindre enn 50"),
@@ -104,6 +104,9 @@ const NewRecipe = () => {
       });
 
       setSaving(true);
+
+      // Register any new tags to the recipe_tags table
+      await registerRecipeTags(householdId, userId, validated.tags);
 
       const instructionsForDb = validated.instructions.map((instruction, index) => ({
         step: index + 1,

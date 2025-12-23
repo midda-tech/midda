@@ -6,6 +6,7 @@ import { ProfileSection } from "@/components/settings/ProfileSection";
 import { HouseholdSection } from "@/components/settings/HouseholdSection";
 import { AppSettingsSection } from "@/components/settings/AppSettingsSection";
 import { ShoppingListCategoriesSection } from "@/components/settings/ShoppingListCategoriesSection";
+import { RecipeTagsSection } from "@/components/settings/RecipeTagsSection";
 import { AccountSection } from "@/components/settings/AccountSection";
 import { VersionSection } from "@/components/settings/VersionSection";
 import { Household } from "@/types/household";
@@ -161,6 +162,7 @@ const Settings = () => {
               categories={currentHousehold.shopping_list_categories || []}
               onCategoriesChange={handleCategoriesChange}
             />
+            <RecipeTagsSection householdId={currentHousehold.id} />
           </>
         )}
 

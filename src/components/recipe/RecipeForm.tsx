@@ -67,7 +67,8 @@ export const RecipeForm = ({
   });
   const [servingsInput, setServingsInput] = useState(String(initialData?.servings ?? defaultFormData.servings));
   const [servingsError, setServingsError] = useState<string | null>(null);
-  const { tags: availableTags } = useRecipeTags(householdId);
+  const { tags: tagObjects } = useRecipeTags(householdId);
+  const availableTags = tagObjects.map(t => t.name);
 
   // Load draft on mount (only if no initialData)
   useEffect(() => {
