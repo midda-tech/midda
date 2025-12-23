@@ -29,7 +29,7 @@ export const useAddRecipeToHousehold = (householdId: string | null, userId: stri
           servings: recipe.servings,
           ingredients: recipe.ingredients,
           instructions: recipe.instructions,
-          tags: recipe.tags,
+          tags: [], // Don't copy system recipe tags - users add their own
           icon: recipe.icon,
         });
 
