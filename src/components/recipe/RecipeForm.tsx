@@ -118,6 +118,7 @@ export const RecipeForm = ({
         return { ...prev, ingredients: updated };
       });
     },
+    reorder: (ingredients: string[]) => setFormData(prev => ({ ...prev, ingredients })),
   };
 
   const updateInstructions = {
@@ -137,6 +138,7 @@ export const RecipeForm = ({
         return { ...prev, instructions: updated };
       });
     },
+    reorder: (instructions: string[]) => setFormData(prev => ({ ...prev, instructions })),
   };
 
   const handleTagToggle = (tag: string) => {
@@ -250,6 +252,7 @@ export const RecipeForm = ({
           onUpdate={updateIngredients.update}
           onAdd={updateIngredients.add}
           onRemove={updateIngredients.remove}
+          onReorder={updateIngredients.reorder}
           placeholder={() => "F.eks. 2 dl melk"}
           addButtonLabel="Legg til ingrediens"
           disabled={isSystemRecipe}
@@ -263,6 +266,7 @@ export const RecipeForm = ({
           onUpdate={updateInstructions.update}
           onAdd={updateInstructions.add}
           onRemove={updateInstructions.remove}
+          onReorder={updateInstructions.reorder}
           placeholder={(index) => `Steg ${index + 1}`}
           addButtonLabel="Legg til steg"
           disabled={isSystemRecipe}
