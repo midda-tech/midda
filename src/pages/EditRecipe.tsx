@@ -20,6 +20,7 @@ import { RecipeForm, RecipeFormData } from "@/components/recipe/RecipeForm";
 import { DEFAULT_ICON } from "@/lib/recipeIcons";
 import { Trash2 } from "lucide-react";
 import { z } from "zod";
+import { registerRecipeTags } from "@/hooks/useRegisterRecipeTags";
 
 const recipeSchema = z.object({
   title: z.string().trim().min(1, "Tittel er påkrevd").max(100, "Tittel må være mindre enn 100 tegn"),
@@ -37,6 +38,7 @@ const EditRecipe = () => {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [householdId, setHouseholdId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [isSystemRecipe, setIsSystemRecipe] = useState(false);
   const [initialData, setInitialData] = useState<RecipeFormData | null>(null);
 
@@ -53,6 +55,8 @@ const EditRecipe = () => {
         navigate("/logg-inn");
         return;
       }
+
+      setUserId(session.user.id);
 
       const { data: profile } = await supabase
         .from("profiles")
@@ -125,7 +129,7 @@ const EditRecipe = () => {
   };
 
   const handleSubmit = async (formData: RecipeFormData) => {
-    if (!householdId || !id || isSystemRecipe) return;
+    if (!householdId || !userId || !id || isSystemRecipe) return;
 
     try {
       const filteredIngredients = formData.ingredients.filter(i => i.trim());
@@ -141,6 +145,9 @@ const EditRecipe = () => {
       });
 
       setSaving(true);
+
+      // Register any new tags to the recipe_tags table
+      await registerRecipeTags(householdId, userId, validated.tags);
 
       const instructionsForDb = validated.instructions.map((instruction, index) => ({
         step: index + 1,

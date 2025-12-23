@@ -164,6 +164,38 @@ export type Database = {
           },
         ]
       }
+      recipe_tags: {
+        Row: {
+          created_at: string
+          created_by: string
+          household_id: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          household_id: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          household_id?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_tags_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shopping_lists: {
         Row: {
           created_at: string
@@ -282,6 +314,7 @@ export type Database = {
         Args: { p_category_name: string; p_item: string; p_token: string }
         Returns: Json
       }
+      delete_recipe_tag: { Args: { p_tag_id: string }; Returns: undefined }
       edit_shopping_list_item: {
         Args: {
           p_category_name: string
@@ -330,6 +363,10 @@ export type Database = {
       remove_shopping_list_item_by_token: {
         Args: { p_category_name: string; p_item_index: number; p_token: string }
         Returns: Json
+      }
+      rename_recipe_tag: {
+        Args: { p_new_name: string; p_tag_id: string }
+        Returns: undefined
       }
       toggle_shopping_list_item: {
         Args: { p_item: string; p_list_id: string }
