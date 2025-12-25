@@ -19,6 +19,9 @@ import { getRecipeIcon } from "@/lib/recipeIcons";
 import { AppHeader } from "@/components/AppHeader";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { NewRecipeDialog } from "@/components/recipe/NewRecipeDialog";
+import { useRecipeViewPreference } from "@/hooks/useRecipeViewPreference";
+import { ViewToggle } from "@/components/recipe/ViewToggle";
+import { RecipeListItem } from "@/components/recipe/RecipeListItem";
 
 const SCROLL_KEY = "recipes-scroll-position";
 
@@ -35,6 +38,7 @@ interface Recipe {
 const Recipes = () => {
   const navigate = useNavigate();
   const { loading: authLoading, householdId } = useRequireAuth();
+  const { viewMode, setViewMode } = useRecipeViewPreference();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -166,6 +170,7 @@ const Recipes = () => {
                 className="pl-9"
               />
             </div>
+            <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
             <Drawer open={filterOpen} onOpenChange={setFilterOpen}>
               <DrawerTrigger asChild>
                 <Button variant="outline" size="icon" className="relative shrink-0">
@@ -212,29 +217,41 @@ const Recipes = () => {
           </div>
 
           <div className="flex flex-col gap-3">
-            {filteredRecipes.map((recipe) => (
-              <Card 
-                key={recipe.id} 
-                className="hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => navigate(`/app/oppskrifter/${recipe.id}`)}
-              >
-                <CardContent className="p-4 flex flex-col items-center text-center">
-                  <img src={getRecipeIcon(recipe.icon)} alt="" className="h-12 w-12 mb-2" />
-                  <span className="font-serif text-lg font-bold text-foreground">
-                    {recipe.title}
-                  </span>
-                  {recipe.tags && Array.isArray(recipe.tags) && recipe.tags.length > 0 && (
-                    <div className="flex flex-wrap justify-center gap-1 mt-2">
-                      {recipe.tags.slice(0, 3).map((tag: string, idx: number) => (
-                        <Badge key={idx} variant="secondary" className="text-xs px-1.5 py-0">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+            {viewMode === "card" ? (
+              filteredRecipes.map((recipe) => (
+                <Card 
+                  key={recipe.id} 
+                  className="hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => navigate(`/app/oppskrifter/${recipe.id}`)}
+                >
+                  <CardContent className="p-4 flex flex-col items-center text-center">
+                    <img src={getRecipeIcon(recipe.icon)} alt="" className="h-12 w-12 mb-2" />
+                    <span className="font-serif text-lg font-bold text-foreground">
+                      {recipe.title}
+                    </span>
+                    {recipe.tags && Array.isArray(recipe.tags) && recipe.tags.length > 0 && (
+                      <div className="flex flex-wrap justify-center gap-1 mt-2">
+                        {recipe.tags.slice(0, 3).map((tag: string, idx: number) => (
+                          <Badge key={idx} variant="secondary" className="text-xs px-1.5 py-0">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              filteredRecipes.map((recipe) => (
+                <RecipeListItem
+                  key={recipe.id}
+                  title={recipe.title}
+                  icon={recipe.icon}
+                  tags={Array.isArray(recipe.tags) ? (recipe.tags as string[]) : []}
+                  onClick={() => navigate(`/app/oppskrifter/${recipe.id}`)}
+                />
+              ))
+            )}
           </div>
 
           {filteredRecipes.length === 0 && (
