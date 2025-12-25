@@ -197,7 +197,7 @@ export const RecipeTagsSection = ({ householdId }: RecipeTagsSectionProps) => {
                   </>
                 ) : (
                   <>
-                    <span className="flex-1 text-foreground">{tag.name}</span>
+                    <span className="flex-1 min-w-0 truncate text-foreground">{tag.name}</span>
                     <Button
                       variant="ghost"
                       size="icon"
