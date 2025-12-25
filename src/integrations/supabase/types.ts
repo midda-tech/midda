@@ -47,12 +47,14 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          description: string | null
           household_id: string
           icon: number | null
           id: string
           ingredients: Json
           instructions: Json
           servings: number
+          source_url: string | null
           tags: Json
           title: string
           updated_at: string
@@ -60,12 +62,14 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by: string
+          description?: string | null
           household_id: string
           icon?: number | null
           id?: string
           ingredients?: Json
           instructions?: Json
           servings?: number
+          source_url?: string | null
           tags?: Json
           title: string
           updated_at?: string
@@ -73,12 +77,14 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string
+          description?: string | null
           household_id?: string
           icon?: number | null
           id?: string
           ingredients?: Json
           instructions?: Json
           servings?: number
+          source_url?: string | null
           tags?: Json
           title?: string
           updated_at?: string
@@ -240,33 +246,39 @@ export type Database = {
       system_recipes: {
         Row: {
           created_at: string
+          description: string | null
           icon: number | null
           id: string
           ingredients: Json
           instructions: Json
           servings: number
+          source_url: string | null
           tags: Json
           title: string
           updated_at: string
         }
         Insert: {
           created_at?: string
+          description?: string | null
           icon?: number | null
           id?: string
           ingredients?: Json
           instructions?: Json
           servings?: number
+          source_url?: string | null
           tags?: Json
           title: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          description?: string | null
           icon?: number | null
           id?: string
           ingredients?: Json
           instructions?: Json
           servings?: number
+          source_url?: string | null
           tags?: Json
           title?: string
           updated_at?: string

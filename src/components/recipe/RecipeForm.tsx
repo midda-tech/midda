@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { DynamicTextFields } from "@/components/recipe/DynamicTextFields";
 import { IconSelector } from "@/components/recipe/IconSelector";
 import { TagSelector } from "@/components/recipe/TagSelector";
@@ -9,6 +10,7 @@ import { useRecipeTags } from "@/hooks/useRecipeTags";
 import { getRecipeIcon, DEFAULT_ICON } from "@/lib/recipeIcons";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { toast } from "sonner";
+import { Link } from "lucide-react";
 
 export interface RecipeFormData {
   title: string;
@@ -17,6 +19,8 @@ export interface RecipeFormData {
   ingredients: string[];
   instructions: string[];
   tags: string[];
+  description?: string;
+  sourceUrl?: string;
 }
 
 interface RecipeFormProps {
@@ -37,7 +41,9 @@ const getDefaultFormData = (defaultServings?: number): RecipeFormData => ({
   icon: DEFAULT_ICON,
   ingredients: [""],
   instructions: [""],
-  tags: []
+  tags: [],
+  description: "",
+  sourceUrl: ""
 });
 
 export const RecipeForm = ({
@@ -195,6 +201,41 @@ export const RecipeForm = ({
           onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
           disabled={isSystemRecipe}
         />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="description">Beskrivelse (valgfritt)</Label>
+        <Textarea
+          id="description"
+          placeholder="Beskriv oppskriften kort..."
+          value={formData.description || ""}
+          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+          maxLength={500}
+          disabled={isSystemRecipe}
+          rows={2}
+          className="resize-none"
+        />
+        {(formData.description?.length || 0) > 400 && (
+          <p className="text-xs text-muted-foreground text-right">
+            {formData.description?.length || 0}/500
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="sourceUrl">Kilde (URL, valgfritt)</Label>
+        <div className="relative">
+          <Link className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="sourceUrl"
+            type="url"
+            placeholder="https://..."
+            value={formData.sourceUrl || ""}
+            onChange={(e) => setFormData(prev => ({ ...prev, sourceUrl: e.target.value }))}
+            disabled={isSystemRecipe}
+            className="pl-9"
+          />
+        </div>
       </div>
 
       <div className="space-y-2">
