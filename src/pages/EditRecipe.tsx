@@ -21,91 +21,62 @@ import { DEFAULT_ICON } from "@/lib/recipeIcons";
 import { Trash2 } from "lucide-react";
 import { z } from "zod";
 import { registerRecipeTags } from "@/hooks/useRegisterRecipeTags";
-
-const recipeSchema = z.object({
-  title: z.string().trim().min(1, "Tittel er påkrevd").max(100, "Tittel må være mindre enn 100 tegn"),
-  servings: z.number().min(1, "Antall personer må være minst 1").max(50, "Antall personer må være mindre enn 50"),
-  icon: z.number().min(1).max(10),
-  ingredients: z.array(z.string().trim().min(1, "Ingrediens kan ikke være tom")).min(1, "Minst én ingrediens er påkrevd"),
-  instructions: z.array(z.string().trim().min(1, "Steg kan ikke være tomt")).min(1, "Minst ett steg er påkrevd"),
-  tags: z.array(z.string().trim().min(1)),
-  description: z.string().max(500, "Beskrivelse må være mindre enn 500 tegn").optional(),
-  sourceUrl: z.string().url("Ugyldig URL").optional().or(z.literal(""))
-});
+import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { recipeSchema } from "@/lib/recipeSchema";
 
 const EditRecipe = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const [loading, setLoading] = useState(true);
+  const { loading: authLoading, householdId, userId } = useRequireAuth();
+  
+  const [dataLoading, setDataLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [householdId, setHouseholdId] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   const [isSystemRecipe, setIsSystemRecipe] = useState(false);
   const [initialData, setInitialData] = useState<RecipeFormData | null>(null);
 
   useEffect(() => {
-    const loadRecipe = async () => {
-      if (!id) {
-        navigate("/app/oppskrifter");
-        return;
-      }
-
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        navigate("/logg-inn");
-        return;
-      }
-
-      setUserId(session.user.id);
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("current_household_id")
-        .eq("id", session.user.id)
-        .maybeSingle();
-
-      if (!profile?.current_household_id) {
-        navigate("/velg-husstand");
-        return;
-      }
-
-      setHouseholdId(profile.current_household_id);
-
-      const { data: householdRecipe } = await supabase
-        .from("household_recipes")
-        .select("*")
-        .eq("id", id)
-        .eq("household_id", profile.current_household_id)
-        .maybeSingle();
-
-      if (householdRecipe) {
-        setIsSystemRecipe(false);
-        setInitialData(transformRecipeToFormData(householdRecipe));
-        setLoading(false);
-        return;
-      }
-
-      const { data: systemRecipe } = await supabase
-        .from("system_recipes")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
-
-      if (systemRecipe) {
-        setIsSystemRecipe(true);
-        setInitialData(transformRecipeToFormData(systemRecipe));
-        setLoading(false);
-        return;
-      }
-
-      toast.error("Oppskrift ikke funnet");
-      navigate("/app/oppskrifter");
-    };
-
+    if (authLoading || !householdId) return;
+    
     loadRecipe();
-  }, [id, navigate]);
+  }, [authLoading, householdId, id]);
+
+  const loadRecipe = async () => {
+    if (!id || !householdId) {
+      navigate("/app/oppskrifter");
+      return;
+    }
+
+    const { data: householdRecipe } = await supabase
+      .from("household_recipes")
+      .select("*")
+      .eq("id", id)
+      .eq("household_id", householdId)
+      .maybeSingle();
+
+    if (householdRecipe) {
+      setIsSystemRecipe(false);
+      setInitialData(transformRecipeToFormData(householdRecipe));
+      setDataLoading(false);
+      return;
+    }
+
+    const { data: systemRecipe } = await supabase
+      .from("system_recipes")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (systemRecipe) {
+      setIsSystemRecipe(true);
+      setInitialData(transformRecipeToFormData(systemRecipe));
+      setDataLoading(false);
+      return;
+    }
+
+    toast.error("Oppskrift ikke funnet");
+    navigate("/app/oppskrifter");
+  };
 
   const transformRecipeToFormData = (recipe: any): RecipeFormData => {
     const ingredients = Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0
@@ -215,7 +186,7 @@ const EditRecipe = () => {
     }
   };
 
-  if (loading || !householdId || !initialData) {
+  if (authLoading || dataLoading || !householdId || !initialData) {
     return null;
   }
 

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import { NewRecipeDialog } from "@/components/recipe/NewRecipeDialog";
 import { useRecipeViewPreference } from "@/hooks/useRecipeViewPreference";
 import { ViewToggle } from "@/components/recipe/ViewToggle";
 import { RecipeListItem } from "@/components/recipe/RecipeListItem";
+import { useTagFilter } from "@/hooks/useTagFilter";
 
 const SCROLL_KEY = "recipes-scroll-position";
 
@@ -41,21 +42,11 @@ const Recipes = () => {
   const { viewMode, setViewMode } = useRecipeViewPreference();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
 
-  // Get all unique tags from recipes
-  const allTags = useMemo(() => {
-    const tagSet = new Set<string>();
-    recipes.forEach(recipe => {
-      if (recipe.tags && Array.isArray(recipe.tags)) {
-        recipe.tags.forEach((tag: string) => tagSet.add(tag));
-      }
-    });
-    return Array.from(tagSet).sort();
-  }, [recipes]);
+  const { selectedTags, allTags, toggleTag, clearFilters, filterByTags } = useTagFilter(recipes);
 
   // Save scroll position before navigating away
   useEffect(() => {
@@ -100,24 +91,9 @@ const Recipes = () => {
     }
   };
 
-  const toggleTag = (tag: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tag) 
-        ? prev.filter(t => t !== tag) 
-        : [...prev, tag]
-    );
-  };
-
-  const clearFilters = () => {
-    setSelectedTags([]);
-  };
-
   const filteredRecipes = recipes.filter(recipe => {
     const matchesSearch = recipe.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTags = selectedTags.length === 0 || 
-      (recipe.tags && Array.isArray(recipe.tags) && 
-        selectedTags.every(tag => (recipe.tags as string[]).includes(tag)));
-    return matchesSearch && matchesTags;
+    return matchesSearch && filterByTags(recipe);
   });
 
   if (authLoading || dataLoading) {
