@@ -7,6 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 
+const isLovablePreview = () => {
+  const hostname = window.location.hostname;
+  return hostname.includes("id-preview--") && hostname.includes(".lovable.app");
+};
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,6 +23,19 @@ const Login = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         navigate("/app");
+        return;
+      }
+      
+      // Auto-login in Lovable Preview only
+      if (isLovablePreview()) {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: "anders.vandvik@gmail.com",
+          password: "password123",
+        });
+        if (!error) {
+          toast.info("Dev: Auto-innlogget");
+          navigate("/app");
+        }
       }
     };
     checkUser();
