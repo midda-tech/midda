@@ -178,9 +178,7 @@ export const RecipeForm = ({
       servingsRef.current?.focus();
       return;
     }
-    // Round to nearest integer for database storage
-    const roundedServings = Math.round(servingsValue);
-    onSubmit({ ...formData, servings: roundedServings });
+    onSubmit({ ...formData, servings: servingsValue });
   };
 
   const handleCancel = () => {
