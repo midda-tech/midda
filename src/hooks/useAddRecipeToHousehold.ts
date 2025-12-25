@@ -10,6 +10,8 @@ interface RecipeData {
   instructions: Json;
   tags: Json;
   icon: number | null;
+  description?: string | null;
+  source_url?: string | null;
 }
 
 export const useAddRecipeToHousehold = (householdId: string | null, userId: string | null) => {
@@ -31,6 +33,8 @@ export const useAddRecipeToHousehold = (householdId: string | null, userId: stri
           instructions: recipe.instructions,
           tags: [], // Don't copy system recipe tags - users add their own
           icon: recipe.icon,
+          description: recipe.description || null,
+          source_url: recipe.source_url || null,
         });
 
       if (error) throw error;

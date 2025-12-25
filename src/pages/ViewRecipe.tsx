@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/AppHeader";
 import { getRecipeIcon } from "@/lib/recipeIcons";
-import { Pencil, ArrowLeft, Users, Plus, Check } from "lucide-react";
+import { Pencil, ArrowLeft, Users, Plus, Check, ExternalLink } from "lucide-react";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useAddRecipeToHousehold } from "@/hooks/useAddRecipeToHousehold";
 
@@ -171,6 +171,28 @@ const ViewRecipe = () => {
                     </div>
                   )}
                 </div>
+                {recipe.description && (
+                  <p className="text-muted-foreground italic max-w-lg">
+                    {recipe.description}
+                  </p>
+                )}
+                {recipe.source_url && (
+                  <a
+                    href={recipe.source_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    {(() => {
+                      try {
+                        return new URL(recipe.source_url).hostname.replace('www.', '');
+                      } catch {
+                        return 'Se original';
+                      }
+                    })()}
+                  </a>
+                )}
               </div>
 
               <div className="grid sm:grid-cols-2 gap-6 sm:gap-8 pt-6">

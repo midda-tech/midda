@@ -15,10 +15,12 @@ const recipeSchema = z.object({
   icon: z.number().min(1).max(10),
   ingredients: z.array(z.string().trim().min(1, "Ingrediens kan ikke være tom")).min(1, "Minst én ingrediens er påkrevd"),
   instructions: z.array(z.string().trim().min(1, "Steg kan ikke være tomt")).min(1, "Minst ett steg er påkrevd"),
-  tags: z.array(z.string().trim().min(1))
+  tags: z.array(z.string().trim().min(1)),
+  description: z.string().max(500, "Beskrivelse må være mindre enn 500 tegn").optional(),
+  sourceUrl: z.string().url("Ugyldig URL").optional().or(z.literal(""))
 });
 
-const transformParsedRecipe = (recipe: any): RecipeFormData => ({
+const transformParsedRecipe = (recipe: any, sourceUrl?: string): RecipeFormData => ({
   title: recipe.title || "",
   servings: recipe.servings || 2,
   icon: DEFAULT_ICON,
@@ -31,6 +33,8 @@ const transformParsedRecipe = (recipe: any): RecipeFormData => ({
   tags: Array.isArray(recipe.tags)
     ? recipe.tags.map((t: string) => t.toLowerCase())
     : [],
+  description: recipe.description || "",
+  sourceUrl: sourceUrl || recipe.source_url || "",
 });
 
 const DRAFT_KEY = "new-recipe-draft";
@@ -39,6 +43,7 @@ const NewRecipe = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const parsedRecipe = location.state?.parsedRecipe;
+  const parsedSourceUrl = location.state?.sourceUrl;
   const { clearDraft } = useFormDraft<RecipeFormData>(DRAFT_KEY);
   
   const [loading, setLoading] = useState(true);
@@ -100,7 +105,9 @@ const NewRecipe = () => {
         icon: formData.icon,
         ingredients: filteredIngredients,
         instructions: filteredInstructions,
-        tags: formData.tags
+        tags: formData.tags,
+        description: formData.description?.trim() || undefined,
+        sourceUrl: formData.sourceUrl?.trim() || undefined
       });
 
       setSaving(true);
@@ -123,7 +130,9 @@ const NewRecipe = () => {
           icon: validated.icon,
           ingredients: validated.ingredients,
           instructions: instructionsForDb,
-          tags: validated.tags
+          tags: validated.tags,
+          description: validated.description || null,
+          source_url: validated.sourceUrl || null
         });
 
       if (error) throw error;
@@ -163,7 +172,7 @@ const NewRecipe = () => {
 
               <RecipeForm
                 householdId={householdId}
-                initialData={parsedRecipe ? transformParsedRecipe(parsedRecipe) : undefined}
+                initialData={parsedRecipe ? transformParsedRecipe(parsedRecipe, parsedSourceUrl) : undefined}
                 draftKey={parsedRecipe ? undefined : DRAFT_KEY}
                 defaultServings={defaultServings}
                 onSubmit={handleSubmit}

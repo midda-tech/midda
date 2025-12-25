@@ -46,7 +46,7 @@ const NewRecipeFromUrl = () => {
       }
 
       toast.success("Oppskrift lest fra URL!");
-      navigate("/app/oppskrifter/ny", { state: { parsedRecipe: data.recipe } });
+      navigate("/app/oppskrifter/ny", { state: { parsedRecipe: data.recipe, sourceUrl: url.trim() } });
     } catch (error) {
       console.error("[parse-recipe-url] Error:", {
         error,

@@ -28,7 +28,9 @@ const recipeSchema = z.object({
   icon: z.number().min(1).max(10),
   ingredients: z.array(z.string().trim().min(1, "Ingrediens kan ikke være tom")).min(1, "Minst én ingrediens er påkrevd"),
   instructions: z.array(z.string().trim().min(1, "Steg kan ikke være tomt")).min(1, "Minst ett steg er påkrevd"),
-  tags: z.array(z.string().trim().min(1))
+  tags: z.array(z.string().trim().min(1)),
+  description: z.string().max(500, "Beskrivelse må være mindre enn 500 tegn").optional(),
+  sourceUrl: z.string().url("Ugyldig URL").optional().or(z.literal(""))
 });
 
 const EditRecipe = () => {
@@ -124,7 +126,9 @@ const EditRecipe = () => {
       icon: recipe.icon ?? DEFAULT_ICON,
       ingredients: ingredients.length > 0 ? ingredients : [""],
       instructions: instructions.length > 0 ? instructions : [""],
-      tags
+      tags,
+      description: recipe.description || "",
+      sourceUrl: recipe.source_url || ""
     };
   };
 
@@ -141,7 +145,9 @@ const EditRecipe = () => {
         icon: formData.icon,
         ingredients: filteredIngredients,
         instructions: filteredInstructions,
-        tags: formData.tags
+        tags: formData.tags,
+        description: formData.description?.trim() || undefined,
+        sourceUrl: formData.sourceUrl?.trim() || undefined
       });
 
       setSaving(true);
@@ -162,7 +168,9 @@ const EditRecipe = () => {
           icon: validated.icon,
           ingredients: validated.ingredients,
           instructions: instructionsForDb,
-          tags: validated.tags
+          tags: validated.tags,
+          description: validated.description || null,
+          source_url: validated.sourceUrl || null
         })
         .eq("id", id)
         .eq("household_id", householdId);
