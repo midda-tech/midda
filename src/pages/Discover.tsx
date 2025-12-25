@@ -19,6 +19,9 @@ import { getRecipeIcon } from "@/lib/recipeIcons";
 import { AppHeader } from "@/components/AppHeader";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useAddRecipeToHousehold } from "@/hooks/useAddRecipeToHousehold";
+import { useRecipeViewPreference } from "@/hooks/useRecipeViewPreference";
+import { ViewToggle } from "@/components/recipe/ViewToggle";
+import { RecipeListItem } from "@/components/recipe/RecipeListItem";
 
 interface SystemRecipe {
   id: string;
@@ -34,6 +37,7 @@ const Discover = () => {
   const navigate = useNavigate();
   const { loading: authLoading, householdId, userId } = useRequireAuth();
   const { addToHousehold } = useAddRecipeToHousehold(householdId, userId);
+  const { viewMode, setViewMode } = useRecipeViewPreference();
   const [systemRecipes, setSystemRecipes] = useState<SystemRecipe[]>([]);
   const [savedRecipeIds, setSavedRecipeIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
@@ -88,9 +92,9 @@ const Discover = () => {
     }
   };
 
-  const handleSaveRecipe = async (recipe: SystemRecipe, e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const handleSaveRecipe = async (recipe: SystemRecipe, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    e?.preventDefault();
     
     if (!householdId || !userId) return;
     if (savedRecipeIds.has(recipe.id)) return;
@@ -123,6 +127,23 @@ const Discover = () => {
         selectedTags.every(tag => (recipe.tags as string[]).includes(tag)));
     return matchesSearch && matchesTags;
   });
+
+  const renderAddButton = (recipe: SystemRecipe) => {
+    const isSaved = savedRecipeIds.has(recipe.id);
+    const isSaving = savingId === recipe.id;
+
+    return (
+      <Button
+        variant={isSaved ? "secondary" : "default"}
+        size="icon"
+        className="h-8 w-8"
+        onClick={() => handleSaveRecipe(recipe)}
+        disabled={isSaved || isSaving}
+      >
+        {isSaved ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+      </Button>
+    );
+  };
 
   if (authLoading || dataLoading) {
     return null;
@@ -164,6 +185,7 @@ const Discover = () => {
                 className="pl-9"
               />
             </div>
+            <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
             <Drawer open={filterOpen} onOpenChange={setFilterOpen}>
               <DrawerTrigger asChild>
                 <Button variant="outline" size="icon" className="relative shrink-0">
@@ -210,53 +232,66 @@ const Discover = () => {
           </div>
 
           <div className="flex flex-col gap-3">
-            {filteredRecipes.map((recipe) => {
-              const isSaved = savedRecipeIds.has(recipe.id);
-              const isSaving = savingId === recipe.id;
-              
-              return (
-                <Card 
-                  key={recipe.id} 
-                  className="hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => navigate(`/app/oppskrifter/${recipe.id}`)}
-                >
-                  <CardContent className="p-4 flex flex-col items-center text-center">
-                    <img src={getRecipeIcon(recipe.icon)} alt="" className="h-12 w-12 mb-2" />
-                    <span className="font-serif text-lg font-bold text-foreground">
-                      {recipe.title}
-                    </span>
-                    {recipe.tags && Array.isArray(recipe.tags) && recipe.tags.length > 0 && (
-                      <div className="flex flex-wrap justify-center gap-1 mt-2">
-                        {recipe.tags.slice(0, 3).map((tag: string, idx: number) => (
-                          <Badge key={idx} variant="secondary" className="text-xs px-1.5 py-0">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                    <Button
-                      variant={isSaved ? "secondary" : "default"}
-                      size="sm"
-                      className="mt-3 gap-1"
-                      onClick={(e) => handleSaveRecipe(recipe, e)}
-                      disabled={isSaved || isSaving}
-                    >
-                      {isSaved ? (
-                        <>
-                          <Check className="h-4 w-4" />
-                          Lagret
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="h-4 w-4" />
-                          {isSaving ? "..." : "Legg til"}
-                        </>
+            {viewMode === "card" ? (
+              filteredRecipes.map((recipe) => {
+                const isSaved = savedRecipeIds.has(recipe.id);
+                const isSaving = savingId === recipe.id;
+                
+                return (
+                  <Card 
+                    key={recipe.id} 
+                    className="hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => navigate(`/app/oppskrifter/${recipe.id}`)}
+                  >
+                    <CardContent className="p-4 flex flex-col items-center text-center">
+                      <img src={getRecipeIcon(recipe.icon)} alt="" className="h-12 w-12 mb-2" />
+                      <span className="font-serif text-lg font-bold text-foreground">
+                        {recipe.title}
+                      </span>
+                      {recipe.tags && Array.isArray(recipe.tags) && recipe.tags.length > 0 && (
+                        <div className="flex flex-wrap justify-center gap-1 mt-2">
+                          {recipe.tags.slice(0, 3).map((tag: string, idx: number) => (
+                            <Badge key={idx} variant="secondary" className="text-xs px-1.5 py-0">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
                       )}
-                    </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                      <Button
+                        variant={isSaved ? "secondary" : "default"}
+                        size="sm"
+                        className="mt-3 gap-1"
+                        onClick={(e) => handleSaveRecipe(recipe, e)}
+                        disabled={isSaved || isSaving}
+                      >
+                        {isSaved ? (
+                          <>
+                            <Check className="h-4 w-4" />
+                            Lagret
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="h-4 w-4" />
+                            {isSaving ? "..." : "Legg til"}
+                          </>
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            ) : (
+              filteredRecipes.map((recipe) => (
+                <RecipeListItem
+                  key={recipe.id}
+                  title={recipe.title}
+                  icon={recipe.icon}
+                  tags={Array.isArray(recipe.tags) ? (recipe.tags as string[]) : []}
+                  onClick={() => navigate(`/app/oppskrifter/${recipe.id}`)}
+                  action={renderAddButton(recipe)}
+                />
+              ))
+            )}
           </div>
 
           {filteredRecipes.length === 0 && (
