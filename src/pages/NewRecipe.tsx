@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,16 +9,8 @@ import { z } from "zod";
 import { DEFAULT_ICON } from "@/lib/recipeIcons";
 import { useFormDraft } from "@/hooks/useFormDraft";
 import { registerRecipeTags } from "@/hooks/useRegisterRecipeTags";
-const recipeSchema = z.object({
-  title: z.string().trim().min(1, "Tittel er påkrevd").max(100, "Tittel må være mindre enn 100 tegn"),
-  servings: z.number().min(1, "Antall personer må være minst 1").max(50, "Antall personer må være mindre enn 50"),
-  icon: z.number().min(1).max(10),
-  ingredients: z.array(z.string().trim().min(1, "Ingrediens kan ikke være tom")).min(1, "Minst én ingrediens er påkrevd"),
-  instructions: z.array(z.string().trim().min(1, "Steg kan ikke være tomt")).min(1, "Minst ett steg er påkrevd"),
-  tags: z.array(z.string().trim().min(1)),
-  description: z.string().max(500, "Beskrivelse må være mindre enn 500 tegn").optional(),
-  sourceUrl: z.string().url("Ugyldig URL").optional().or(z.literal(""))
-});
+import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { recipeSchema } from "@/lib/recipeSchema";
 
 const transformParsedRecipe = (recipe: any, sourceUrl?: string): RecipeFormData => ({
   title: recipe.title || "",
@@ -45,52 +37,26 @@ const NewRecipe = () => {
   const parsedRecipe = location.state?.parsedRecipe;
   const parsedSourceUrl = location.state?.sourceUrl;
   const { clearDraft } = useFormDraft<RecipeFormData>(DRAFT_KEY);
+  const { loading, householdId, userId } = useRequireAuth();
   
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [householdId, setHouseholdId] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   const [defaultServings, setDefaultServings] = useState<number | undefined>(undefined);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        navigate("/logg-inn");
-        return;
-      }
-
-      setUserId(session.user.id);
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("current_household_id")
-        .eq("id", session.user.id)
-        .maybeSingle();
-
-      if (!profile?.current_household_id) {
-        navigate("/velg-husstand");
-        return;
-      }
-
-      setHouseholdId(profile.current_household_id);
-
-      const { data: household } = await supabase
-        .from("households")
-        .select("default_servings")
-        .eq("id", profile.current_household_id)
-        .maybeSingle();
-
-      if (household?.default_servings) {
-        setDefaultServings(household.default_servings);
-      }
-
-      setLoading(false);
-    };
-
-    checkAuth();
-  }, [navigate]);
+  // Fetch default servings when householdId is available
+  useState(() => {
+    if (!householdId) return;
+    
+    supabase
+      .from("households")
+      .select("default_servings")
+      .eq("id", householdId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.default_servings) {
+          setDefaultServings(data.default_servings);
+        }
+      });
+  });
 
   const handleSubmit = async (formData: RecipeFormData) => {
     if (!householdId || !userId) return;
