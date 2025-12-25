@@ -9,7 +9,8 @@ import { toast } from "sonner";
 
 const isLovablePreview = () => {
   const hostname = window.location.hostname;
-  return hostname.includes("id-preview--") && hostname.includes(".lovable.app");
+  return hostname.includes(".lovableproject.com") || 
+         (hostname.includes("id-preview--") && hostname.includes(".lovable.app"));
 };
 
 const Login = () => {
